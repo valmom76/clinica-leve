@@ -10,6 +10,18 @@ public final class TenantAccess {
     }
 
     public static String currentClinicId() {
+        return currentJwt().getClaimAsString("clinicId");
+    }
+
+    public static String currentUserId() {
+        var subject = currentJwt().getSubject();
+        if (subject == null || subject.isBlank()) {
+            throw new AuthenticationCredentialsNotFoundException("Token sem usuário");
+        }
+        return subject;
+    }
+
+    private static Jwt currentJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
             throw new AuthenticationCredentialsNotFoundException("Clínica não identificada");
@@ -19,6 +31,6 @@ public final class TenantAccess {
         if (clinicId == null || clinicId.isBlank()) {
             throw new AuthenticationCredentialsNotFoundException("Token sem clínica");
         }
-        return clinicId;
+        return jwt;
     }
 }
