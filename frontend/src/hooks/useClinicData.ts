@@ -8,6 +8,7 @@ import type {
   Specialty,
 } from "../types";
 import { appointmentDateRange } from "../utils/dates";
+import { canAccessClinicalData } from "../app/navigation";
 
 export function useClinicData(session: Session) {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -21,14 +22,17 @@ export function useClinicData(session: Session) {
     setLoading(true);
     setError("");
     const range = appointmentDateRange();
+    const clinicalAccess = canAccessClinicalData(session.user.role);
 
     try {
       const [patientList, professionalList, specialtyList, appointmentList] =
         await Promise.all([
-          api.patients(session),
+          clinicalAccess ? api.patients(session) : Promise.resolve([]),
           api.professionals(session),
           api.specialties(session),
-          api.appointments(session, range.from, range.to),
+          clinicalAccess
+            ? api.appointments(session, range.from, range.to)
+            : Promise.resolve([]),
         ]);
       setPatients(patientList);
       setProfessionals(professionalList);

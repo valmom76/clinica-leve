@@ -1,6 +1,6 @@
 import { HeartPulse, LogOut, X } from "lucide-react";
 import type { Session } from "../../types";
-import { navItems, type ViewKey } from "../../app/navigation";
+import { navigationFor, type ViewKey } from "../../app/navigation";
 
 type SidebarProps = {
   session: Session;
@@ -24,6 +24,9 @@ export function Sidebar({
     .map((part) => part[0])
     .slice(0, 2)
     .join("");
+  const items = navigationFor(session.user.role);
+  const operationItems = items.filter((item) => item.section === "operation");
+  const managementItems = items.filter((item) => item.section === "management");
 
   return (
     <aside className={`sidebar ${open ? "open" : ""}`}>
@@ -41,7 +44,7 @@ export function Sidebar({
 
       <nav>
         <span className="nav-caption">OPERAÇÃO</span>
-        {navItems.slice(0, 5).map(({ key, label, icon: Icon }) => (
+        {operationItems.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             className={view === key ? "active" : ""}
@@ -51,16 +54,20 @@ export function Sidebar({
           </button>
         ))}
 
-        <span className="nav-caption management">GESTÃO</span>
-        {navItems.slice(5).map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            className={view === key ? "active" : ""}
-            onClick={() => onNavigate(key)}
-          >
-            <Icon size={18} /><span>{label}</span>
-          </button>
-        ))}
+        {managementItems.length > 0 && (
+          <>
+            <span className="nav-caption management">GESTÃO</span>
+            {managementItems.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                className={view === key ? "active" : ""}
+                onClick={() => onNavigate(key)}
+              >
+                <Icon size={18} /><span>{label}</span>
+              </button>
+            ))}
+          </>
+        )}
       </nav>
 
       <div className="sidebar-user">

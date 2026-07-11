@@ -15,7 +15,7 @@ type DashboardPageProps = {
   patients: Patient[];
   professionals: Professional[];
   appointments: Appointment[];
-  onNewAppointment: () => void;
+  onNewAppointment?: () => void;
   onNavigate: (view: ViewKey) => void;
 };
 
@@ -36,11 +36,11 @@ export function DashboardPage({
         eyebrow="OPERAÇÃO DA CLÍNICA"
         title="Visão geral"
         description="Acompanhe os dados persistidos da empresa conectada."
-        action={
+        action={onNewAppointment ? (
           <button className="primary-button" onClick={onNewAppointment}>
             <CalendarDays size={17} />Novo agendamento
           </button>
-        }
+        ) : undefined}
       />
 
       <section className="kpis">
@@ -77,9 +77,11 @@ export function DashboardPage({
               <span className="eyebrow">AGENDA</span>
               <h2>Próximos atendimentos</h2>
             </div>
-            <button className="text-button" onClick={() => onNavigate("agenda")}>
-              Abrir calendário
-            </button>
+            {onNewAppointment && (
+              <button className="text-button" onClick={() => onNavigate("agenda")}>
+                Abrir calendário
+              </button>
+            )}
           </div>
           <div className="appointment-list">
             {upcoming.length === 0 && (

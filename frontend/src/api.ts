@@ -1,9 +1,15 @@
 import type {
   Appointment,
+  ClinicUser,
+  MaterialCategory,
   Patient,
   Professional,
+  Role,
   Session,
   Specialty,
+  StockMaterial,
+  StockMovement,
+  StockMovementType,
 } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "/api";
@@ -113,6 +119,108 @@ export const api = {
     request<Appointment>(
       "/appointments",
       { method: "POST", body: JSON.stringify(payload) },
+      session,
+    ),
+
+  users: (session: Session) =>
+    request<ClinicUser[]>("/users", {}, session),
+
+  createUser: (
+    session: Session,
+    payload: { name: string; email: string; password: string; role: Role },
+  ) =>
+    request<ClinicUser>(
+      "/users",
+      { method: "POST", body: JSON.stringify(payload) },
+      session,
+    ),
+
+  updateUser: (
+    session: Session,
+    id: string,
+    payload: {
+      name: string;
+      email: string;
+      password?: string;
+      role: Role;
+      active: boolean;
+    },
+  ) =>
+    request<ClinicUser>(
+      `/users/${id}`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      session,
+    ),
+
+  materialCategories: (session: Session) =>
+    request<MaterialCategory[]>("/inventory/categories", {}, session),
+
+  createMaterialCategory: (session: Session, name: string) =>
+    request<MaterialCategory>(
+      "/inventory/categories",
+      { method: "POST", body: JSON.stringify({ name }) },
+      session,
+    ),
+
+  materials: (session: Session) =>
+    request<StockMaterial[]>("/inventory/materials", {}, session),
+
+  createMaterial: (
+    session: Session,
+    payload: {
+      name: string;
+      categoryId: string;
+      sku?: string;
+      unit: string;
+      minimumStock: number;
+      lotControlled: boolean;
+    },
+  ) =>
+    request<StockMaterial>(
+      "/inventory/materials",
+      { method: "POST", body: JSON.stringify(payload) },
+      session,
+    ),
+
+  updateMaterial: (
+    session: Session,
+    id: string,
+    payload: {
+      name: string;
+      categoryId: string;
+      sku?: string;
+      unit: string;
+      minimumStock: number;
+      lotControlled: boolean;
+    },
+  ) =>
+    request<StockMaterial>(
+      `/inventory/materials/${id}`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      session,
+    ),
+
+  moveStock: (
+    session: Session,
+    materialId: string,
+    payload: {
+      type: StockMovementType;
+      quantity: number;
+      reason: string;
+      lotNumber?: string;
+      expirationDate?: string;
+    },
+  ) =>
+    request<StockMaterial>(
+      `/inventory/materials/${materialId}/movements`,
+      { method: "POST", body: JSON.stringify(payload) },
+      session,
+    ),
+
+  stockMovements: (session: Session, materialId: string) =>
+    request<StockMovement[]>(
+      `/inventory/materials/${materialId}/movements`,
+      {},
       session,
     ),
 };

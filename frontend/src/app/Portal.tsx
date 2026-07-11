@@ -4,20 +4,22 @@ import { Topbar } from "../components/layout/Topbar";
 import { AgendaPage } from "../features/agenda/AgendaPage";
 import { AppointmentModal } from "../features/agenda/AppointmentModal";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { InventoryPage } from "../features/inventory/InventoryPage";
 import { PatientModal } from "../features/patients/PatientModal";
 import { PatientsPage } from "../features/patients/PatientsPage";
 import { ProfessionalsPage } from "../features/professionals/ProfessionalsPage";
 import { FutureModulePage } from "../features/shared/FutureModulePage";
+import { UsersPage } from "../features/users/UsersPage";
 import { useClinicData } from "../hooks/useClinicData";
 import type { Session } from "../types";
-import type { ViewKey } from "./navigation";
+import { canAccessClinicalData, type ViewKey } from "./navigation";
 
 type PortalProps = {
   session: Session;
   onLogout: () => void;
 };
 
-const futureViews: ViewKey[] = ["inventory", "finance", "time", "reports"];
+const futureViews: ViewKey[] = ["finance", "time", "reports"];
 
 export function Portal({ session, onLogout }: PortalProps) {
   const [view, setView] = useState<ViewKey>("dashboard");
@@ -26,6 +28,7 @@ export function Portal({ session, onLogout }: PortalProps) {
   const [appointmentModal, setAppointmentModal] = useState(false);
   const [toast, setToast] = useState("");
   const clinicData = useClinicData(session);
+  const clinicalAccess = canAccessClinicalData(session.user.role);
 
   function navigate(nextView: ViewKey) {
     setView(nextView);
@@ -83,7 +86,9 @@ export function Portal({ session, onLogout }: PortalProps) {
                   patients={clinicData.patients}
                   professionals={clinicData.professionals}
                   appointments={clinicData.appointments}
-                  onNewAppointment={() => setAppointmentModal(true)}
+                  onNewAppointment={
+                    clinicalAccess ? () => setAppointmentModal(true) : undefined
+                  }
                   onNavigate={navigate}
                 />
               )}
@@ -104,6 +109,8 @@ export function Portal({ session, onLogout }: PortalProps) {
                   professionals={clinicData.professionals}
                 />
               )}
+              {view === "inventory" && <InventoryPage session={session} />}
+              {view === "users" && <UsersPage session={session} />}
               {futureViews.includes(view) && (
                 <FutureModulePage view={view} />
               )}

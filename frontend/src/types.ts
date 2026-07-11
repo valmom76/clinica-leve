@@ -25,6 +25,14 @@ export type Session = {
   };
 };
 
+export type ClinicUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  active: boolean;
+};
+
 export type Patient = {
   id: string;
   name: string;
@@ -76,4 +84,37 @@ export type Appointment = {
   endAt: string;
   status: AppointmentStatus;
   notes?: string;
+};
+
+export type MaterialCategory = {
+  id: string;
+  name: string;
+};
+
+export type StockMaterial = {
+  id: string;
+  name: string;
+  categoryId: string;
+  categoryName: string;
+  sku?: string;
+  unit: string;
+  minimumStock: number;
+  currentStock: number;
+  lotControlled: boolean;
+  lowStock: boolean;
+  nearestExpiration?: string;
+  active: boolean;
+};
+
+export type StockMovementType = "ENTRY" | "EXIT";
+
+export type StockMovement = {
+  id: string;
+  type: StockMovementType;
+  quantity: number;
+  balanceAfter: number;
+  reason: string;
+  lotNumber?: string;
+  expirationDate?: string;
+  occurredAt: string;
 };

@@ -3,7 +3,6 @@ import type { ViewKey } from "../../app/navigation";
 import { PageTitle } from "../../components/ui/PageTitle";
 
 const moduleNames: Partial<Record<ViewKey, string>> = {
-  inventory: "Estoque",
   finance: "Financeiro",
   time: "Controle de ponto",
   reports: "Relatórios",
