@@ -1,10 +1,8 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Sidebar } from "../components/layout/Sidebar";
 import { Topbar } from "../components/layout/Topbar";
-import { AgendaPage } from "../features/agenda/AgendaPage";
 import { AppointmentModal } from "../features/agenda/AppointmentModal";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
-import { InventoryPage } from "../features/inventory/InventoryPage";
 import { PatientModal } from "../features/patients/PatientModal";
 import { PatientsPage } from "../features/patients/PatientsPage";
 import { ProfessionalsPage } from "../features/professionals/ProfessionalsPage";
@@ -19,7 +17,12 @@ type PortalProps = {
   onLogout: () => void;
 };
 
-const futureViews: ViewKey[] = ["finance", "time", "reports"];
+const futureViews: ViewKey[] = [];
+const AgendaPage = lazy(() => import("../features/agenda/AgendaPage").then((module) => ({ default: module.AgendaPage })));
+const InventoryPage = lazy(() => import("../features/inventory/InventoryPage").then((module) => ({ default: module.InventoryPage })));
+const FinancePage = lazy(() => import("../features/finance/FinancePage").then((module) => ({ default: module.FinancePage })));
+const TimeClockPage = lazy(() => import("../features/timeclock/TimeClockPage").then((module) => ({ default: module.TimeClockPage })));
+const ReportsPage = lazy(() => import("../features/reports/ReportsPage").then((module) => ({ default: module.ReportsPage })));
 
 export function Portal({ session, onLogout }: PortalProps) {
   const [view, setView] = useState<ViewKey>("dashboard");
@@ -93,10 +96,12 @@ export function Portal({ session, onLogout }: PortalProps) {
                 />
               )}
               {view === "agenda" && (
-                <AgendaPage
-                  appointments={clinicData.appointments}
-                  onNewAppointment={() => setAppointmentModal(true)}
-                />
+                <Suspense fallback={<div className="loading-state"><span /><p>Carregando agenda...</p></div>}>
+                  <AgendaPage
+                    appointments={clinicData.appointments}
+                    onNewAppointment={() => setAppointmentModal(true)}
+                  />
+                </Suspense>
               )}
               {view === "patients" && (
                 <PatientsPage
@@ -109,7 +114,10 @@ export function Portal({ session, onLogout }: PortalProps) {
                   professionals={clinicData.professionals}
                 />
               )}
-              {view === "inventory" && <InventoryPage session={session} />}
+              {view === "inventory" && <Suspense fallback={<div className="loading-state"><span /><p>Carregando estoque...</p></div>}><InventoryPage session={session} /></Suspense>}
+              {view === "finance" && <Suspense fallback={<div className="loading-state"><span /><p>Carregando financeiro...</p></div>}><FinancePage session={session} /></Suspense>}
+              {view === "time" && <Suspense fallback={<div className="loading-state"><span /><p>Carregando controle de ponto...</p></div>}><TimeClockPage session={session} /></Suspense>}
+              {view === "reports" && <Suspense fallback={<div className="loading-state"><span /><p>Gerando relatórios...</p></div>}><ReportsPage session={session} /></Suspense>}
               {view === "users" && <UsersPage session={session} />}
               {futureViews.includes(view) && (
                 <FutureModulePage view={view} />

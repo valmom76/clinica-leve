@@ -1,7 +1,11 @@
 import type {
   Appointment,
   ClinicUser,
+  FinancialCategory,
+  FinancialEntry,
+  FinancialEntryType,
   MaterialCategory,
+  ManagementReport,
   Patient,
   Professional,
   Role,
@@ -10,6 +14,9 @@ import type {
   StockMaterial,
   StockMovement,
   StockMovementType,
+  TimeDaySummary,
+  TimeEntry,
+  TimeEntryType,
 } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "/api";
@@ -127,7 +134,7 @@ export const api = {
 
   createUser: (
     session: Session,
-    payload: { name: string; email: string; password: string; role: Role },
+    payload: { name: string; email: string; password: string; role: Role; expectedDailyMinutes: number },
   ) =>
     request<ClinicUser>(
       "/users",
@@ -143,6 +150,7 @@ export const api = {
       email: string;
       password?: string;
       role: Role;
+      expectedDailyMinutes: number;
       active: boolean;
     },
   ) =>
@@ -223,4 +231,59 @@ export const api = {
       {},
       session,
     ),
+
+  financialCategories: (session: Session) =>
+    request<FinancialCategory[]>("/finance/categories", {}, session),
+  createFinancialCategory: (session: Session, payload: { name: string; type: FinancialEntryType }) =>
+    request<FinancialCategory>("/finance/categories", { method: "POST", body: JSON.stringify(payload) }, session),
+  financialEntries: (session: Session) => request<FinancialEntry[]>("/finance/entries", {}, session),
+  createFinancialEntry: (session: Session, payload: FinancialEntryPayload) =>
+    request<FinancialEntry>("/finance/entries", { method: "POST", body: JSON.stringify(payload) }, session),
+  updateFinancialEntry: (session: Session, id: string, payload: FinancialEntryPayload) =>
+    request<FinancialEntry>(`/finance/entries/${id}`, { method: "PUT", body: JSON.stringify(payload) }, session),
+  settleFinancialEntry: (session: Session, id: string, payload: { paymentDate: string; paymentMethod: string }) =>
+    request<FinancialEntry>(`/finance/entries/${id}/settle`, { method: "POST", body: JSON.stringify(payload) }, session),
+  reopenFinancialEntry: (session: Session, id: string) =>
+    request<FinancialEntry>(`/finance/entries/${id}/reopen`, { method: "POST" }, session),
+  cancelFinancialEntry: (session: Session, id: string) =>
+    request<FinancialEntry>(`/finance/entries/${id}/cancel`, { method: "POST" }, session),
+
+  myTimeDay: (session: Session, date: string) =>
+    request<TimeDaySummary>(`/time-clock/me?date=${encodeURIComponent(date)}`, {}, session),
+  punchTime: (session: Session, type: TimeEntryType) =>
+    request<TimeDaySummary>(
+      "/time-clock/me/punch",
+      { method: "POST", body: JSON.stringify({ type }) },
+      session,
+    ),
+  teamTimeDay: (session: Session, date: string) =>
+    request<TimeDaySummary[]>(`/time-clock/team?date=${encodeURIComponent(date)}`, {}, session),
+  createTimeEntry: (
+    session: Session,
+    payload: { userId: string; type: TimeEntryType; occurredAt: string; notes?: string },
+  ) => request<TimeEntry>("/time-clock/entries", { method: "POST", body: JSON.stringify(payload) }, session),
+  updateTimeEntry: (
+    session: Session,
+    id: string,
+    payload: { type: TimeEntryType; occurredAt: string; notes?: string },
+  ) => request<TimeEntry>(`/time-clock/entries/${id}`, { method: "PUT", body: JSON.stringify(payload) }, session),
+  deleteTimeEntry: (session: Session, id: string) =>
+    request<void>(`/time-clock/entries/${id}`, { method: "DELETE" }, session),
+
+  managementReport: (session: Session, from: string, to: string) =>
+    request<ManagementReport>(
+      `/reports/management?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      {},
+      session,
+    ),
+};
+
+type FinancialEntryPayload = {
+  description: string;
+  type: FinancialEntryType;
+  categoryId: string;
+  amount: number;
+  dueDate: string;
+  counterparty?: string;
+  notes?: string;
 };

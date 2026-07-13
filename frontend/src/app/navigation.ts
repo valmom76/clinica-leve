@@ -47,7 +47,7 @@ export const navItems: NavigationItem[] = [
   { key: "professionals", label: "Profissionais", icon: Stethoscope, section: "operation" },
   { key: "inventory", label: "Estoque", icon: Box, section: "operation", roles: ["ADMIN", "MANAGER", "STOCK"] },
   { key: "finance", label: "Financeiro", icon: CircleDollarSign, section: "management", roles: ["ADMIN", "MANAGER", "FINANCE"] },
-  { key: "time", label: "Ponto", icon: Clock3, section: "management", roles: ["ADMIN", "MANAGER", "HR"] },
+  { key: "time", label: "Ponto", icon: Clock3, section: "management" },
   { key: "users", label: "Equipe e acessos", icon: ShieldCheck, section: "management", roles: ["ADMIN"] },
   { key: "reports", label: "Relatórios", icon: BarChart3, section: "management", roles: ["ADMIN", "MANAGER"] },
 ];

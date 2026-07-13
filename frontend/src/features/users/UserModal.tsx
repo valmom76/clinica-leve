@@ -27,6 +27,7 @@ export function UserModal({ session, user, onClose, onSaved }: UserModalProps) {
         name: String(data.get("name")),
         email: String(data.get("email")),
         role: String(data.get("role")) as Role,
+        expectedDailyMinutes: Math.round(Number(data.get("expectedDailyHours")) * 60),
       };
       const saved = user
         ? await api.updateUser(session, user.id, {
@@ -67,6 +68,18 @@ export function UserModal({ session, user, onClose, onSaved }: UserModalProps) {
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
+          </label>
+          <label>
+            Jornada diária (horas)
+            <input
+              name="expectedDailyHours"
+              type="number"
+              min="1"
+              max="12"
+              step="0.5"
+              defaultValue={(user?.expectedDailyMinutes ?? 480) / 60}
+              required
+            />
           </label>
           <label className="full">
             {user ? "Nova senha (deixe em branco para manter)" : "Senha temporária"}
