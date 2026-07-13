@@ -21,13 +21,12 @@ spring:
     enabled: true
   jackson:
     default-property-inclusion: non_null
-  web:
-    error:
-      include-message: never
 
 server:
   port: 8080
   forward-headers-strategy: framework
+  error:
+    include-message: never
 
 management:
   endpoints:

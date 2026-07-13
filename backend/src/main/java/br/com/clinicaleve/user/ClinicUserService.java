@@ -43,6 +43,7 @@ public class ClinicUserService {
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(request.role());
+        user.setExpectedDailyMinutes(request.expectedDailyMinutes() == null ? 480 : request.expectedDailyMinutes());
         return UserResponse.from(repository.save(user));
     }
 
@@ -73,6 +74,9 @@ public class ClinicUserService {
         user.setName(request.name().trim());
         user.setEmail(email);
         user.setRole(request.role());
+        if (request.expectedDailyMinutes() != null) {
+            user.setExpectedDailyMinutes(request.expectedDailyMinutes());
+        }
         user.setActive(request.active());
         if (request.password() != null && !request.password().isBlank()) {
             user.setPasswordHash(passwordEncoder.encode(request.password()));

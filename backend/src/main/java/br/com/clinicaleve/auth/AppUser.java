@@ -31,5 +31,8 @@ public class AppUser extends TenantEntity {
     private Role role;
 
     @Column(nullable = false)
+    private int expectedDailyMinutes = 480;
+
+    @Column(nullable = false)
     private boolean active = true;
 }
