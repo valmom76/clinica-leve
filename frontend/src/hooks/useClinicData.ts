@@ -49,10 +49,28 @@ export function useClinicData(session: Session) {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    if (!canAccessClinicalData(session.user.role)) return;
+    const timer = window.setInterval(() => {
+      const range = appointmentDateRange();
+      api.appointments(session, range.from, range.to).then(setAppointments).catch(() => undefined);
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [session]);
+
   function addPatient(patient: Patient) {
     setPatients((current) =>
       [...current, patient].sort((a, b) => a.name.localeCompare(b.name)),
     );
+  }
+
+  function upsertPatient(patient: Patient) {
+    setPatients((current) => {
+      const next = current.some((item) => item.id === patient.id)
+        ? current.map((item) => item.id === patient.id ? patient : item)
+        : [...current, patient];
+      return next.sort((a, b) => a.name.localeCompare(b.name));
+    });
   }
 
   function addAppointment(appointment: Appointment) {
@@ -61,6 +79,33 @@ export function useClinicData(session: Session) {
         a.startAt.localeCompare(b.startAt),
       ),
     );
+  }
+
+  function upsertAppointment(appointment: Appointment) {
+    setAppointments((current) => {
+      const next = current.some((item) => item.id === appointment.id)
+        ? current.map((item) => item.id === appointment.id ? appointment : item)
+        : [...current, appointment];
+      return next.sort((a, b) => a.startAt.localeCompare(b.startAt));
+    });
+  }
+
+  function addSpecialty(specialty: Specialty) {
+    setSpecialties((current) => {
+      const next = current.some((item) => item.id === specialty.id)
+        ? current.map((item) => item.id === specialty.id ? specialty : item)
+        : [...current, specialty];
+      return next.filter((item) => item.active).sort((a, b) => a.name.localeCompare(b.name));
+    });
+  }
+
+  function upsertProfessional(professional: Professional) {
+    setProfessionals((current) => {
+      const withoutCurrent = current.filter((item) => item.id !== professional.id);
+      return professional.active
+        ? [...withoutCurrent, professional].sort((a, b) => a.name.localeCompare(b.name))
+        : withoutCurrent;
+    });
   }
 
   return {
@@ -72,6 +117,10 @@ export function useClinicData(session: Session) {
     error,
     refresh,
     addPatient,
+    upsertPatient,
     addAppointment,
+    upsertAppointment,
+    addSpecialty,
+    upsertProfessional,
   };
 }

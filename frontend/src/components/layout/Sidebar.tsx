@@ -31,8 +31,10 @@ export function Sidebar({
   return (
     <aside className={`sidebar ${open ? "open" : ""}`}>
       <div className="brand">
-        <span className="brand-symbol"><HeartPulse size={21} /></span>
-        <strong>Clínica <em>Leve</em></strong>
+        <span className={`brand-symbol ${session.clinic.logoUrl ? "clinic-logo" : ""}`}>
+          {session.clinic.logoUrl ? <img src={session.clinic.logoUrl} alt={`Logomarca ${session.clinic.name}`} /> : <HeartPulse size={21} />}
+        </span>
+        <strong>{session.clinic.logoUrl ? session.clinic.name : <>Clínica <em>Leve</em></>}</strong>
         <button
           className="mobile-only icon-button"
           onClick={onClose}

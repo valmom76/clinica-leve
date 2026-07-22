@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { MessageCircle, Pencil, Plus, Search } from "lucide-react";
 import { PageTitle } from "../../components/ui/PageTitle";
 import type { Patient } from "../../types";
 
 type PatientsPageProps = {
   patients: Patient[];
   onNewPatient: () => void;
+  onPatientSelect: (patient: Patient) => void;
 };
 
 export function PatientsPage({
   patients,
   onNewPatient,
+  onPatientSelect,
 }: PatientsPageProps) {
   const [search, setSearch] = useState("");
   const visible = patients.filter((patient) =>
@@ -51,7 +53,9 @@ export function PatientsPage({
                 <th>Telefone</th>
                 <th>E-mail</th>
                 <th>Nascimento</th>
+                <th>WhatsApp</th>
                 <th>Status</th>
+                <th aria-label="Ações" />
               </tr>
             </thead>
             <tbody>
@@ -78,7 +82,9 @@ export function PatientsPage({
                         ).toLocaleDateString("pt-BR")
                       : "—"}
                   </td>
+                  <td>{patient.whatsappOptIn ? <small className="status confirmed"><MessageCircle size={13} />Autorizado</small> : <small className="status waiting">Não autorizado</small>}</td>
                   <td><small className="status confirmed">Ativo</small></td>
+                  <td><button className="icon-button" onClick={() => onPatientSelect(patient)} aria-label={`Editar ${patient.name}`}><Pencil size={16} /></button></td>
                 </tr>
               ))}
             </tbody>

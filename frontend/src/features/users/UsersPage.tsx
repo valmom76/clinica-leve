@@ -3,11 +3,15 @@ import { Pencil, Plus, Search } from "lucide-react";
 import { api } from "../../api";
 import { Empty } from "../../components/ui/Empty";
 import { PageTitle } from "../../components/ui/PageTitle";
-import type { ClinicUser, Session } from "../../types";
+import type { ClinicUser, Professional, Session } from "../../types";
 import { roleLabel } from "./roleOptions";
 import { UserModal } from "./UserModal";
 
-export function UsersPage({ session }: { session: Session }) {
+export function UsersPage({ session, newProfessional, onNewProfessionalHandled }: {
+  session: Session;
+  newProfessional?: Professional;
+  onNewProfessionalHandled?: () => void;
+}) {
   const [users, setUsers] = useState<ClinicUser[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -30,6 +34,10 @@ export function UsersPage({ session }: { session: Session }) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (newProfessional) setSelected("new");
+  }, [newProfessional]);
+
   const visible = users.filter((user) =>
     [user.name, user.email, roleLabel[user.role]].some((value) =>
       value.toLowerCase().includes(search.toLowerCase()),
@@ -45,6 +53,7 @@ export function UsersPage({ session }: { session: Session }) {
       return next.sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
     });
     setSelected(null);
+    onNewProfessionalHandled?.();
   }
 
   return (
@@ -77,6 +86,7 @@ export function UsersPage({ session }: { session: Session }) {
                 <th>Usuário</th>
                 <th>E-mail</th>
                 <th>Perfil</th>
+                <th>Vínculo clínico</th>
                 <th>Status</th>
                 <th aria-label="Ações" />
               </tr>
@@ -92,6 +102,7 @@ export function UsersPage({ session }: { session: Session }) {
                   </td>
                   <td>{user.email}</td>
                   <td>{roleLabel[user.role]}</td>
+                  <td>{user.professionalId ? "Vinculado" : "—"}</td>
                   <td>
                     <small className={`status ${user.active ? "confirmed" : "cancelled"}`}>
                       {user.active ? "Ativo" : "Inativo"}
@@ -115,7 +126,11 @@ export function UsersPage({ session }: { session: Session }) {
         <UserModal
           session={session}
           user={selected === "new" ? undefined : selected}
-          onClose={() => setSelected(null)}
+          initialProfessional={selected === "new" ? newProfessional : undefined}
+          onClose={() => {
+            setSelected(null);
+            onNewProfessionalHandled?.();
+          }}
           onSaved={saveUser}
         />
       )}

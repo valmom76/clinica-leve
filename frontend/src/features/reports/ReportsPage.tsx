@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
-import { BarChart3, Box, CalendarCheck2, Clock3, Download, PackageSearch, TrendingUp, WalletCards } from "lucide-react";
+import { BarChart3, Box, CalendarCheck2, Clock3, PackageSearch, TrendingUp, WalletCards } from "lucide-react";
 import { api } from "../../api";
 import { Empty } from "../../components/ui/Empty";
 import { Kpi } from "../../components/ui/Kpi";
 import { PageTitle } from "../../components/ui/PageTitle";
 import type { ManagementReport, Session } from "../../types";
 import { GroupedBarChart } from "./GroupedBarChart";
-import { clinicToday, currency, downloadReportCsv, firstDayOfMonth, hours, shiftDays } from "./reportUtils";
+import { clinicToday, currency, firstDayOfMonth, hours, shiftDays } from "./reportUtils";
 
 type Preset = "MONTH" | "30" | "90" | "YEAR" | "CUSTOM";
 
-export function ReportsPage({ session }: { session: Session }) {
+export function ManagementDashboardPage({ session }: { session: Session }) {
   const today = clinicToday(session.clinic.timezone);
   const [from, setFrom] = useState(firstDayOfMonth(today));
   const [to, setTo] = useState(today);
@@ -57,13 +57,8 @@ export function ReportsPage({ session }: { session: Session }) {
     <>
       <PageTitle
         eyebrow="INTELIGÊNCIA DE GESTÃO"
-        title="Relatórios gerenciais"
-        description="Atendimentos, financeiro, estoque e equipe reunidos em uma única leitura."
-        action={report ? (
-          <button className="secondary-button" onClick={() => downloadReportCsv(report, session.clinic.name)}>
-            <Download size={18} />Exportar CSV
-          </button>
-        ) : undefined}
+        title="Dashboard gerencial"
+        description="Atendimentos, financeiro, estoque e equipe reunidos para uma leitura executiva."
       />
 
       <section className="panel report-filter-panel">

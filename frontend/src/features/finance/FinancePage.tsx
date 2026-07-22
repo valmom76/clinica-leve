@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, CircleDollarSign, FolderPlus, Pencil, Plus, RotateCcw, Search, XCircle } from "lucide-react";
+import { BarChart3, CheckCircle2, CircleDollarSign, FolderPlus, ListChecks, Pencil, Plus, RotateCcw, Search, XCircle } from "lucide-react";
 import { api } from "../../api";
 import { Empty } from "../../components/ui/Empty";
 import { Kpi } from "../../components/ui/Kpi";
+import { ModuleTabs } from "../../components/ui/ModuleTabs";
 import { PageTitle } from "../../components/ui/PageTitle";
 import type { FinancialCategory, FinancialEntry, FinancialEntryStatus, FinancialEntryType, Session } from "../../types";
 import { FinanceCategoryModal } from "./FinanceCategoryModal";
 import { currency, localDate, statusLabel, typeLabel } from "./financeUtils";
 import { FinancialEntryModal } from "./FinancialEntryModal";
+import { FinanceReport } from "./FinanceReport";
 import { SettleModal } from "./SettleModal";
 
+type FinanceTab = "ENTRIES" | "REPORT";
+
 export function FinancePage({ session }: { session: Session }) {
+  const [tab, setTab] = useState<FinanceTab>("ENTRIES");
   const [categories, setCategories] = useState<FinancialCategory[]>([]);
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
   const [search, setSearch] = useState("");
@@ -54,18 +59,27 @@ export function FinancePage({ session }: { session: Session }) {
 
   return <>
     <PageTitle eyebrow="GESTÃO FINANCEIRA" title="Financeiro" description="Contas a pagar, receber e fluxo realizado desta clínica."
-      action={<div className="inventory-title-actions">
+      action={tab === "ENTRIES" ? <div className="inventory-title-actions">
         <button className="secondary-button" onClick={() => setCategoryModal(true)}><FolderPlus size={17} />Categoria</button>
         <button className="primary-button" onClick={() => setEntryModal("new")}><Plus size={17} />Novo lançamento</button>
-      </div>} />
-    <section className="kpis">
+      </div> : undefined} />
+    <ModuleTabs<FinanceTab>
+      active={tab}
+      onChange={setTab}
+      items={[
+        { key: "ENTRIES", label: "Lançamentos", icon: ListChecks },
+        { key: "REPORT", label: "Relatório financeiro", icon: BarChart3 },
+      ]}
+    />
+    {tab === "ENTRIES" ? <>
+      <section className="kpis">
       <Kpi icon={CircleDollarSign} label="A receber" value={currency(receivable)} tone="sage" />
       <Kpi icon={CircleDollarSign} label="A pagar" value={currency(payable)} tone="terracotta" />
       <Kpi icon={CheckCircle2} label="Recebido" value={currency(received)} tone="blue" />
       <Kpi icon={CheckCircle2} label="Saldo realizado" value={currency(received - paid)} tone="sage" />
-    </section>
-    {error && <div className="page-error">{error}<button onClick={() => void load()}>Tentar novamente</button></div>}
-    <article className="panel data-panel">
+      </section>
+      {error && <div className="page-error">{error}<button onClick={() => void load()}>Tentar novamente</button></div>}
+      <article className="panel data-panel">
       <div className="finance-toolbar">
         <div className="field-search"><Search size={16} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar lançamento" /></div>
         <select value={type} onChange={(e) => setType(e.target.value as FinancialEntryType | "ALL")}><option value="ALL">Todos os tipos</option><option value="INCOME">Receitas</option><option value="EXPENSE">Despesas</option></select>
@@ -86,7 +100,8 @@ export function FinancePage({ session }: { session: Session }) {
         </tr>)}</tbody></table>
         {loading && <Empty text="Carregando lançamentos..." />}{!loading && visible.length === 0 && <Empty text="Nenhum lançamento encontrado." />}
       </div>
-    </article>
+      </article>
+    </> : <FinanceReport session={session} categories={categories} />}
     {categoryModal && <FinanceCategoryModal session={session} onClose={() => setCategoryModal(false)} onCreated={(c) => { setCategories((v) => [...v, c]); setCategoryModal(false); }} />}
     {entryModal && <FinancialEntryModal session={session} categories={categories} entry={entryModal === "new" ? undefined : entryModal} onClose={() => setEntryModal(null)} onSaved={update} />}
     {settle && <SettleModal session={session} entry={settle} onClose={() => setSettle(null)} onSaved={update} />}

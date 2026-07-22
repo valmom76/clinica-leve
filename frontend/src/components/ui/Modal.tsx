@@ -6,6 +6,7 @@ type ModalProps = {
   description: string;
   onClose: () => void;
   children: ReactNode;
+  className?: string;
 };
 
 export function Modal({
@@ -13,11 +14,12 @@ export function Modal({
   description,
   onClose,
   children,
+  className = "",
 }: ModalProps) {
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
       <section
-        className="modal"
+        className={`modal ${className}`.trim()}
         role="dialog"
         aria-modal="true"
         onMouseDown={(event) => event.stopPropagation()}

@@ -1,10 +1,12 @@
 import {
-  BarChart3,
   Box,
   CalendarDays,
   CircleDollarSign,
   Clock3,
+  CreditCard,
+  FileHeart,
   LayoutDashboard,
+  Palette,
   ShieldCheck,
   Stethoscope,
   UsersRound,
@@ -17,11 +19,13 @@ export type ViewKey =
   | "agenda"
   | "patients"
   | "professionals"
+  | "clinical"
   | "inventory"
   | "finance"
   | "time"
   | "users"
-  | "reports";
+  | "billing"
+  | "settings";
 
 export type NavigationSection = "operation" | "management";
 
@@ -41,15 +45,17 @@ export const clinicalRoles: Role[] = [
 ];
 
 export const navItems: NavigationItem[] = [
-  { key: "dashboard", label: "Visão geral", icon: LayoutDashboard, section: "operation" },
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, section: "operation" },
   { key: "agenda", label: "Agenda", icon: CalendarDays, section: "operation", roles: clinicalRoles },
   { key: "patients", label: "Pacientes", icon: UsersRound, section: "operation", roles: clinicalRoles },
   { key: "professionals", label: "Profissionais", icon: Stethoscope, section: "operation" },
+  { key: "clinical", label: "Atendimentos", icon: FileHeart, section: "operation", roles: ["ADMIN", "PROFESSIONAL"] },
   { key: "inventory", label: "Estoque", icon: Box, section: "operation", roles: ["ADMIN", "MANAGER", "STOCK"] },
   { key: "finance", label: "Financeiro", icon: CircleDollarSign, section: "management", roles: ["ADMIN", "MANAGER", "FINANCE"] },
   { key: "time", label: "Ponto", icon: Clock3, section: "management" },
   { key: "users", label: "Equipe e acessos", icon: ShieldCheck, section: "management", roles: ["ADMIN"] },
-  { key: "reports", label: "Relatórios", icon: BarChart3, section: "management", roles: ["ADMIN", "MANAGER"] },
+  { key: "billing", label: "Minha assinatura", icon: CreditCard, section: "management", roles: ["ADMIN"] },
+  { key: "settings", label: "Personalização", icon: Palette, section: "management", roles: ["ADMIN"] },
 ];
 
 export function navigationFor(role: Role) {

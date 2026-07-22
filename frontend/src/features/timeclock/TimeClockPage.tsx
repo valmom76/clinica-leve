@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Clock3, Coffee, LogIn, LogOut, PencilLine, TimerReset } from "lucide-react";
+import { BarChart3, CalendarDays, Clock3, Coffee, LogIn, LogOut, PencilLine, TimerReset } from "lucide-react";
 import { api } from "../../api";
 import { Empty } from "../../components/ui/Empty";
 import { Kpi } from "../../components/ui/Kpi";
 import { PageTitle } from "../../components/ui/PageTitle";
+import { ModuleTabs } from "../../components/ui/ModuleTabs";
 import type { Session, TimeDaySummary, TimeEntry, TimeEntryType } from "../../types";
 import { TimeEntriesModal } from "./TimeEntriesModal";
 import { TimeEntryModal } from "./TimeEntryModal";
+import { EmployeeTimeReport } from "./EmployeeTimeReport";
 import {
   clinicDate,
   formatBalance,
@@ -18,6 +20,7 @@ import {
 } from "./timeClockUtils";
 
 const managerRoles = ["ADMIN", "MANAGER", "HR"];
+type TimeSection = "CLOCK" | "REPORT";
 
 export function TimeClockPage({ session }: { session: Session }) {
   const today = useMemo(() => clinicDate(session.clinic.timezone), [session.clinic.timezone]);
@@ -33,6 +36,7 @@ export function TimeClockPage({ session }: { session: Session }) {
   const [editor, setEditor] = useState<{ summary: TimeDaySummary; entry?: TimeEntry } | null>(null);
   const [deletingId, setDeletingId] = useState<string>();
   const [, setClockTick] = useState(0);
+  const [section, setSection] = useState<TimeSection>("CLOCK");
 
   const loadMine = useCallback(async () => {
     setLoading(true);
@@ -119,6 +123,20 @@ export function TimeClockPage({ session }: { session: Session }) {
         description="Marcações de entrada, intervalos, saída e conferência diária."
       />
 
+      {canManage && (
+        <ModuleTabs<TimeSection>
+          active={section}
+          onChange={setSection}
+          items={[
+            { key: "CLOCK", label: "Registro diário", icon: Clock3 },
+            { key: "REPORT", label: "Relatório por funcionário", icon: BarChart3 },
+          ]}
+        />
+      )}
+
+      {section === "REPORT" && canManage ? (
+        <EmployeeTimeReport session={session} />
+      ) : <>
       {error && (
         <div className="page-error">
           {error}<button onClick={() => { void loadMine(); void loadTeam(); }}>Tentar novamente</button>
@@ -230,6 +248,7 @@ export function TimeClockPage({ session }: { session: Session }) {
           onSaved={() => void savedManualEntry()}
         />
       )}
+      </>}
     </>
   );
 }

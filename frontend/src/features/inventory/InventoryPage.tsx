@@ -3,9 +3,11 @@ import {
   AlertTriangle,
   ArrowDownToLine,
   ArrowUpFromLine,
+  BarChart3,
   Boxes,
   CalendarClock,
   FolderPlus,
+  FileSpreadsheet,
   History,
   PackagePlus,
   Pencil,
@@ -16,6 +18,7 @@ import { api } from "../../api";
 import { Empty } from "../../components/ui/Empty";
 import { Kpi } from "../../components/ui/Kpi";
 import { PageTitle } from "../../components/ui/PageTitle";
+import { ModuleTabs } from "../../components/ui/ModuleTabs";
 import type {
   MaterialCategory,
   Session,
@@ -25,6 +28,8 @@ import type {
 import { CategoryModal } from "./CategoryModal";
 import { formatDate, formatQuantity, expiresWithin } from "./inventoryUtils";
 import { MaterialModal } from "./MaterialModal";
+import { InventoryMovementReport } from "./InventoryMovementReport";
+import { InventoryImportModal } from "./InventoryImportModal";
 import { MovementHistoryModal } from "./MovementHistoryModal";
 import { MovementModal } from "./MovementModal";
 
@@ -32,6 +37,8 @@ type MovementSelection = {
   material: StockMaterial;
   type: StockMovementType;
 };
+
+type InventorySection = "STOCK" | "REPORT";
 
 export function InventoryPage({ session }: { session: Session }) {
   const [categories, setCategories] = useState<MaterialCategory[]>([]);
@@ -43,6 +50,8 @@ export function InventoryPage({ session }: { session: Session }) {
   const [materialModal, setMaterialModal] = useState<StockMaterial | "new" | null>(null);
   const [movement, setMovement] = useState<MovementSelection | null>(null);
   const [history, setHistory] = useState<StockMaterial | null>(null);
+  const [section, setSection] = useState<InventorySection>("STOCK");
+  const [importModal, setImportModal] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,18 +106,33 @@ export function InventoryPage({ session }: { session: Session }) {
         eyebrow="SUPRIMENTOS"
         title="Estoque e materiais"
         description="Saldos, lotes e movimentações isolados para esta clínica."
-        action={
+        action={section === "STOCK" ? (
           <div className="inventory-title-actions">
             <button className="secondary-button" onClick={() => setCategoryModal(true)}>
               <FolderPlus size={17} />Categoria
+            </button>
+            <button className="secondary-button" onClick={() => setImportModal(true)}>
+              <FileSpreadsheet size={17} />Importar Excel
             </button>
             <button className="primary-button" onClick={() => setMaterialModal("new")}>
               <PackagePlus size={17} />Novo material
             </button>
           </div>
-        }
+        ) : undefined}
       />
 
+      <ModuleTabs<InventorySection>
+        active={section}
+        onChange={setSection}
+        items={[
+          { key: "STOCK", label: "Estoque atual", icon: Boxes },
+          { key: "REPORT", label: "Relatório de movimentações", icon: BarChart3 },
+        ]}
+      />
+
+      {section === "REPORT" ? (
+        <InventoryMovementReport session={session} materials={materials} />
+      ) : <>
       <section className="kpis">
         <Kpi icon={Boxes} label="Materiais ativos" value={String(materials.length)} tone="sage" />
         <Kpi icon={AlertTriangle} label="Estoque baixo" value={String(lowStock)} tone="terracotta" />
@@ -209,6 +233,10 @@ export function InventoryPage({ session }: { session: Session }) {
       {history && (
         <MovementHistoryModal session={session} material={history} onClose={() => setHistory(null)} />
       )}
+      {importModal && (
+        <InventoryImportModal session={session} onClose={() => setImportModal(false)} onImported={load} />
+      )}
+      </>}
     </>
   );
 }

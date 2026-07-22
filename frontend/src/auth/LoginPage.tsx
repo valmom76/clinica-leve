@@ -1,7 +1,8 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { HeartPulse } from "lucide-react";
 import { api } from "../api";
-import type { Session } from "../types";
+import type { ClinicBranding, Session } from "../types";
+import { applyClinicTheme } from "../utils/clinicThemes";
 
 type LoginPageProps = {
   onAuthenticated: (session: Session) => void;
@@ -10,6 +11,24 @@ type LoginPageProps = {
 export function LoginPage({ onAuthenticated }: LoginPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [clinicSlug, setClinicSlug] = useState("clinica-demo");
+  const [branding, setBranding] = useState<ClinicBranding | null>(null);
+
+  useEffect(() => {
+    const normalized = clinicSlug.trim().toLowerCase();
+    if (normalized.length < 2) {
+      setBranding(null);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      api.publicBranding(normalized).then(setBranding).catch(() => setBranding(null));
+    }, 350);
+    return () => window.clearTimeout(timeout);
+  }, [clinicSlug]);
+
+  useEffect(() => {
+    applyClinicTheme(branding?.themeKey);
+  }, [branding?.themeKey]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,8 +54,10 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     <main className="login-page">
       <section className="login-brand-panel">
         <div className="login-brand">
-          <span className="brand-symbol"><HeartPulse size={30} /></span>
-          <strong>Clínica Leve</strong>
+          <span className={`brand-symbol ${branding?.logoUrl ? "clinic-logo" : ""}`}>
+            {branding?.logoUrl ? <img src={branding.logoUrl} alt={`Logomarca ${branding.clinicName}`} /> : <HeartPulse size={30} />}
+          </span>
+          <strong>{branding?.clinicName ?? "Clínica Leve"}</strong>
         </div>
         <div className="login-message">
           <span>GESTÃO MULTIEMPRESA</span>
@@ -51,13 +72,17 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
 
       <section className="login-form-panel">
         <form className="login-form" onSubmit={submit}>
+          {branding && <div className="login-clinic-identity">
+            {branding.logoUrl ? <img src={branding.logoUrl} alt={`Logomarca ${branding.clinicName}`} /> : <span><HeartPulse size={21} /></span>}
+            <strong>{branding.clinicName}</strong>
+          </div>}
           <span className="eyebrow">BEM-VINDO</span>
           <h2>Acesse sua clínica</h2>
           <p>Informe o identificador da empresa e suas credenciais.</p>
           {error && <div className="form-error">{error}</div>}
           <label>
             Clínica
-            <input name="clinicSlug" defaultValue="clinica-demo" required />
+            <input name="clinicSlug" value={clinicSlug} onChange={(event) => setClinicSlug(event.target.value)} required />
           </label>
           <label>
             E-mail

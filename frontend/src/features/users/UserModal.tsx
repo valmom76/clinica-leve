@@ -1,19 +1,29 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { api } from "../../api";
 import { Modal, ModalActions } from "../../components/ui/Modal";
-import type { ClinicUser, Role, Session } from "../../types";
-import { roleOptions } from "./roleOptions";
+import type { ClinicUser, Professional, Role, Session } from "../../types";
+import { roleAccess, roleOptions } from "./roleOptions";
 
 type UserModalProps = {
   session: Session;
   user?: ClinicUser;
+  initialProfessional?: Professional;
   onClose: () => void;
   onSaved: (user: ClinicUser) => void;
 };
 
-export function UserModal({ session, user, onClose, onSaved }: UserModalProps) {
+export function UserModal({ session, user, initialProfessional, onClose, onSaved }: UserModalProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [selectedRole, setSelectedRole] = useState<Role>(user?.role ?? (initialProfessional ? "PROFESSIONAL" : "RECEPTIONIST"));
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [professionalId, setProfessionalId] = useState(user?.professionalId ?? initialProfessional?.id ?? "");
+
+  useEffect(() => {
+    void api.professionals(session)
+      .then(setProfessionals)
+      .catch(() => setProfessionals([]));
+  }, [session]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,6 +37,7 @@ export function UserModal({ session, user, onClose, onSaved }: UserModalProps) {
         name: String(data.get("name")),
         email: String(data.get("email")),
         role: String(data.get("role")) as Role,
+        professionalId: String(data.get("professionalId") || "") || undefined,
         expectedDailyMinutes: Math.round(Number(data.get("expectedDailyHours")) * 60),
       };
       const saved = user
@@ -55,20 +66,40 @@ export function UserModal({ session, user, onClose, onSaved }: UserModalProps) {
         <div className="form-grid">
           <label className="full">
             Nome
-            <input name="name" defaultValue={user?.name} required />
+            <input name="name" defaultValue={user?.name ?? initialProfessional?.name} required />
           </label>
           <label>
             E-mail
-            <input name="email" type="email" defaultValue={user?.email} required />
+            <input name="email" type="email" defaultValue={user?.email ?? initialProfessional?.email} required />
           </label>
           <label>
             Perfil
-            <select name="role" defaultValue={user?.role ?? "RECEPTIONIST"} required>
+            <select name="role" value={selectedRole} onChange={(event) => setSelectedRole(event.target.value as Role)} required>
               {roleOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
           </label>
+          <div className="role-access-note full"><strong>Acesso deste perfil</strong><span>{roleAccess[selectedRole]}</span></div>
+          {(selectedRole === "PROFESSIONAL" || selectedRole === "ADMIN") && (
+            <label className="full">
+              Vínculo com profissional {selectedRole === "PROFESSIONAL" ? "(obrigatório)" : "(opcional)"}
+              <select
+                name="professionalId"
+                value={professionalId}
+                onChange={(event) => setProfessionalId(event.target.value)}
+                required={selectedRole === "PROFESSIONAL"}
+              >
+                <option value="">Selecione um profissional</option>
+                {professionals.map((professional) => (
+                  <option key={professional.id} value={professional.id}>
+                    {professional.name}{professional.council ? ` · ${professional.council}` : ""}
+                  </option>
+                ))}
+              </select>
+              <small>Esse vínculo determina quem pode finalizar atendimentos e documentos clínicos.</small>
+            </label>
+          )}
           <label>
             Jornada diária (horas)
             <input
