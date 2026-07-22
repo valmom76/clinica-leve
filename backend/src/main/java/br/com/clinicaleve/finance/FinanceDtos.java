@@ -3,6 +3,7 @@ package br.com.clinicaleve.finance;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 public final class FinanceDtos {
     private FinanceDtos() {}
@@ -33,4 +34,16 @@ public final class FinanceDtos {
                     e.getCounterparty(), e.getPaymentMethod(), e.getNotes());
         }
     }
+
+    public record FinanceReportResponse(
+            LocalDate from,
+            LocalDate to,
+            int entryCount,
+            BigDecimal received,
+            BigDecimal paid,
+            BigDecimal net,
+            BigDecimal receivable,
+            BigDecimal payable,
+            List<EntryResponse> entries
+    ) {}
 }

@@ -18,6 +18,16 @@ public final class ProfessionalDtos {
     ) {
     }
 
+    public record ProfessionalUpdateRequest(
+            @NotBlank String specialtyId,
+            @NotBlank @Size(max = 160) String name,
+            @Size(max = 80) String council,
+            @Email @Size(max = 190) String email,
+            @Size(max = 30) String phone,
+            boolean active
+    ) {
+    }
+
     public record ProfessionalResponse(
             String id,
             String name,

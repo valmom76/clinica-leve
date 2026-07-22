@@ -38,4 +38,14 @@ public class FinanceController {
     EntryResponse reopen(@PathVariable String id) { return financeService.reopen(id); }
     @PostMapping("/entries/{id}/cancel")
     EntryResponse cancel(@PathVariable String id) { return financeService.cancel(id); }
+
+    @GetMapping("/reports/context")
+    FinanceReportResponse report(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) FinancialEntryType type,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) FinancialEntryStatus status) {
+        return financeService.report(from, to, type, categoryId, status);
+    }
 }

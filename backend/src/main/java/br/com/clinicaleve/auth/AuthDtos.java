@@ -1,5 +1,6 @@
 package br.com.clinicaleve.auth;
 
+import br.com.clinicaleve.tenant.ClinicTheme;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -24,9 +25,22 @@ public final class AuthDtos {
     ) {
     }
 
-    public record UserSummary(String id, String name, String email, Role role) {
+    public record UserSummary(
+            String id,
+            String name,
+            String email,
+            Role role,
+            String professionalId
+    ) {
     }
 
-    public record ClinicSummary(String id, String name, String slug, String timezone) {
+    public record ClinicSummary(
+            String id,
+            String name,
+            String slug,
+            String timezone,
+            String logoUrl,
+            ClinicTheme themeKey
+    ) {
     }
 }

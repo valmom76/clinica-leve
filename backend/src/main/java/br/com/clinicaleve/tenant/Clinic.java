@@ -3,6 +3,8 @@ package br.com.clinicaleve.tenant;
 import br.com.clinicaleve.shared.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,4 +28,14 @@ public class Clinic extends BaseEntity {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(length = 180)
+    private String logoFileName;
+
+    @Column(length = 40)
+    private String logoContentType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 40)
+    private ClinicTheme themeKey = ClinicTheme.CLINICAL_SERENE;
 }

@@ -19,6 +19,7 @@ public final class UserDtos {
             @NotBlank @Email @Size(max = 190) String email,
             @NotBlank @Size(min = 8, max = 72) String password,
             @NotNull Role role,
+            String professionalId,
             @Min(60) @Max(720) Integer expectedDailyMinutes
     ) {
     }
@@ -28,6 +29,7 @@ public final class UserDtos {
             @NotBlank @Email @Size(max = 190) String email,
             @Size(min = 8, max = 72) String password,
             @NotNull Role role,
+            String professionalId,
             @Min(60) @Max(720) Integer expectedDailyMinutes,
             boolean active
     ) {
@@ -38,6 +40,7 @@ public final class UserDtos {
             String name,
             String email,
             Role role,
+            String professionalId,
             int expectedDailyMinutes,
             boolean active
     ) {
@@ -47,6 +50,7 @@ public final class UserDtos {
                     user.getName(),
                     user.getEmail(),
                     user.getRole(),
+                    user.getProfessionalId(),
                     user.getExpectedDailyMinutes(),
                     user.isActive()
             );

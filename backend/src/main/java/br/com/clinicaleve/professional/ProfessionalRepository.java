@@ -9,5 +9,7 @@ public interface ProfessionalRepository extends JpaRepository<Professional, Stri
 
     List<Professional> findByClinicIdAndActiveTrueOrderByName(String clinicId);
 
+    List<Professional> findByClinicIdOrderByActiveDescNameAsc(String clinicId);
+
     Optional<Professional> findByIdAndClinicId(String id, String clinicId);
 }

@@ -6,6 +6,7 @@ import br.com.clinicaleve.appointment.AppointmentStatus;
 import br.com.clinicaleve.auth.AppUser;
 import br.com.clinicaleve.auth.AppUserRepository;
 import br.com.clinicaleve.auth.Role;
+import br.com.clinicaleve.clinical.ClinicalTemplateDefaults;
 import br.com.clinicaleve.patient.Patient;
 import br.com.clinicaleve.patient.PatientRepository;
 import br.com.clinicaleve.professional.Professional;
@@ -38,6 +39,7 @@ public class DemoDataInitializer implements ApplicationRunner {
     private final PatientRepository patientRepository;
     private final AppointmentRepository appointmentRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ClinicalTemplateDefaults clinicalTemplateDefaults;
 
     @Value("${app.seed.enabled}")
     private boolean enabled;
@@ -73,6 +75,7 @@ public class DemoDataInitializer implements ApplicationRunner {
         admin.setPasswordHash(passwordEncoder.encode(adminPassword));
         admin.setRole(Role.ADMIN);
         userRepository.save(admin);
+        clinicalTemplateDefaults.ensureDefaults(clinic.getId(), admin.getId());
 
         var fisioterapia = specialty(clinic, "Fisioterapia", "#5e9f89");
         var psicologia = specialty(clinic, "Psicologia", "#7b7096");

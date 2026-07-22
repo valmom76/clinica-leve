@@ -3,6 +3,7 @@ package br.com.clinicaleve.user;
 import br.com.clinicaleve.auth.AppUser;
 import br.com.clinicaleve.auth.AppUserRepository;
 import br.com.clinicaleve.auth.Role;
+import br.com.clinicaleve.professional.ProfessionalRepository;
 import br.com.clinicaleve.shared.TenantAccess;
 import br.com.clinicaleve.user.UserDtos.CreateUserRequest;
 import br.com.clinicaleve.user.UserDtos.UpdateUserRequest;
@@ -19,6 +20,7 @@ import java.util.List;
 public class ClinicUserService {
 
     private final AppUserRepository repository;
+    private final ProfessionalRepository professionalRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
@@ -43,6 +45,7 @@ public class ClinicUserService {
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(request.role());
+        user.setProfessionalId(validateProfessionalLink(clinicId, request.role(), request.professionalId(), null));
         user.setExpectedDailyMinutes(request.expectedDailyMinutes() == null ? 480 : request.expectedDailyMinutes());
         return UserResponse.from(repository.save(user));
     }
@@ -74,6 +77,7 @@ public class ClinicUserService {
         user.setName(request.name().trim());
         user.setEmail(email);
         user.setRole(request.role());
+        user.setProfessionalId(validateProfessionalLink(clinicId, request.role(), request.professionalId(), id));
         if (request.expectedDailyMinutes() != null) {
             user.setExpectedDailyMinutes(request.expectedDailyMinutes());
         }
@@ -86,5 +90,28 @@ public class ClinicUserService {
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase();
+    }
+
+    private String validateProfessionalLink(String clinicId, Role role, String professionalId, String userId) {
+        var normalizedId = professionalId == null || professionalId.isBlank() ? null : professionalId.trim();
+        if (role == Role.PROFESSIONAL && normalizedId == null) {
+            throw new IllegalArgumentException("O perfil profissional precisa estar vinculado a um profissional da clínica");
+        }
+        if (normalizedId == null) {
+            return null;
+        }
+        if (role != Role.PROFESSIONAL && role != Role.ADMIN) {
+            throw new IllegalArgumentException("Somente profissionais e administradores podem ter vínculo clínico");
+        }
+        var professional = professionalRepository.findByIdAndClinicId(normalizedId, clinicId)
+                .orElseThrow(() -> new IllegalArgumentException("Profissional não encontrado nesta clínica"));
+        if (!professional.isActive()) {
+            throw new IllegalArgumentException("Não é possível vincular um profissional inativo");
+        }
+        var comparisonId = userId == null ? "" : userId;
+        if (repository.existsByClinicIdAndProfessionalIdAndIdNot(clinicId, normalizedId, comparisonId)) {
+            throw new IllegalArgumentException("Este profissional já está vinculado a outro usuário");
+        }
+        return normalizedId;
     }
 }

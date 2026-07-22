@@ -30,6 +30,9 @@ public class AppUser extends TenantEntity {
     @Column(nullable = false, length = 30)
     private Role role;
 
+    @Column(length = 36)
+    private String professionalId;
+
     @Column(nullable = false)
     private int expectedDailyMinutes = 480;
 

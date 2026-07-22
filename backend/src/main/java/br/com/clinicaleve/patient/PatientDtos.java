@@ -16,7 +16,8 @@ public final class PatientDtos {
             @Size(max = 14) String cpf,
             LocalDate birthDate,
             @Email @Size(max = 190) String email,
-            @NotBlank @Size(max = 30) String phone
+            @NotBlank @Size(max = 30) String phone,
+            boolean whatsappOptIn
     ) {
     }
 
@@ -27,6 +28,8 @@ public final class PatientDtos {
             LocalDate birthDate,
             String email,
             String phone,
+            boolean whatsappOptIn,
+            java.time.Instant whatsappOptInAt,
             boolean active
     ) {
         public static PatientResponse from(Patient patient) {
@@ -37,6 +40,8 @@ public final class PatientDtos {
                     patient.getBirthDate(),
                     patient.getEmail(),
                     patient.getPhone(),
+                    patient.isWhatsappOptIn(),
+                    patient.getWhatsappOptInAt(),
                     patient.isActive()
             );
         }

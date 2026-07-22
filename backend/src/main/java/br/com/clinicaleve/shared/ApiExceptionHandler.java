@@ -1,8 +1,11 @@
 package br.com.clinicaleve.shared;
 
+import br.com.clinicaleve.billing.AsaasIntegrationException;
+import br.com.clinicaleve.billing.SubscriptionPaymentRequiredException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,9 +30,24 @@ public class ApiExceptionHandler {
         return response(HttpStatus.BAD_REQUEST, exception.getMessage(), null);
     }
 
+    @ExceptionHandler(AsaasIntegrationException.class)
+    ResponseEntity<Map<String, Object>> asaas(AsaasIntegrationException exception) {
+        return response(HttpStatus.BAD_GATEWAY, exception.getMessage(), null);
+    }
+
+    @ExceptionHandler(SubscriptionPaymentRequiredException.class)
+    ResponseEntity<Map<String, Object>> paymentRequired(SubscriptionPaymentRequiredException exception) {
+        return response(HttpStatus.PAYMENT_REQUIRED, exception.getMessage(), null);
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     ResponseEntity<Map<String, Object>> credentials() {
         return response(HttpStatus.UNAUTHORIZED, "Clínica, e-mail ou senha inválidos", null);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ResponseEntity<Map<String, Object>> forbidden(AccessDeniedException exception) {
+        return response(HttpStatus.FORBIDDEN, exception.getMessage(), null);
     }
 
     private ResponseEntity<Map<String, Object>> response(

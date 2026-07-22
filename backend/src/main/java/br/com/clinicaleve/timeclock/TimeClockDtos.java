@@ -53,4 +53,21 @@ public final class TimeClockDtos {
             List<EntryResponse> entries
     ) {
     }
+
+    public record EmployeeReportResponse(
+            String userId,
+            String userName,
+            LocalDate from,
+            LocalDate to,
+            int daysWithRecords,
+            int closedDays,
+            int workedMinutes,
+            int expectedMinutes,
+            int balanceMinutes,
+            List<DaySummaryResponse> days
+    ) {
+    }
+
+    public record ReportEmployeeResponse(String userId, String userName, boolean active) {
+    }
 }

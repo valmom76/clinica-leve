@@ -6,6 +6,8 @@ import br.com.clinicaleve.shared.TenantAccess;
 import br.com.clinicaleve.tenant.ClinicRepository;
 import br.com.clinicaleve.timeclock.TimeClockDtos.DaySummaryResponse;
 import br.com.clinicaleve.timeclock.TimeClockDtos.EntryResponse;
+import br.com.clinicaleve.timeclock.TimeClockDtos.EmployeeReportResponse;
+import br.com.clinicaleve.timeclock.TimeClockDtos.ReportEmployeeResponse;
 import br.com.clinicaleve.timeclock.TimeClockDtos.ManualEntryRequest;
 import br.com.clinicaleve.timeclock.TimeClockDtos.UpdateEntryRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -83,6 +86,48 @@ public class TimeClockService {
         return userRepository.findByClinicIdAndActiveTrueOrderByNameAsc(clinicId)
                 .stream()
                 .map(user -> summary(user, date, byUser.getOrDefault(user.getId(), List.of()), zone))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public EmployeeReportResponse employeeReport(String userId, LocalDate from, LocalDate to) {
+        validatePeriod(from, to);
+        var clinicId = TenantAccess.currentClinicId();
+        var zone = clinicZone(clinicId);
+        var user = userRepository.findByIdAndClinicId(userId, clinicId)
+                .orElseThrow(() -> new IllegalArgumentException("Funcionário não encontrado"));
+        var period = new DayRange(
+                from.atStartOfDay(zone).toInstant(),
+                to.plusDays(1).atStartOfDay(zone).toInstant()
+        );
+        var grouped = entryRepository.findDayForUser(clinicId, userId, period.from(), period.to())
+                .stream()
+                .collect(Collectors.groupingBy(entry -> LocalDate.ofInstant(entry.getOccurredAt(), zone)));
+        var days = grouped.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> summary(user, entry.getKey(), entry.getValue(), zone))
+                .toList();
+        var worked = days.stream().mapToInt(DaySummaryResponse::workedMinutes).sum();
+        var expected = days.stream().mapToInt(DaySummaryResponse::expectedMinutes).sum();
+        return new EmployeeReportResponse(
+                user.getId(),
+                user.getName(),
+                from,
+                to,
+                days.size(),
+                (int) days.stream().filter(day -> day.status() == TimeDayStatus.CLOSED).count(),
+                worked,
+                expected,
+                worked - expected,
+                days
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReportEmployeeResponse> reportEmployees() {
+        return userRepository.findByClinicIdOrderByActiveDescNameAsc(TenantAccess.currentClinicId())
+                .stream()
+                .map(user -> new ReportEmployeeResponse(user.getId(), user.getName(), user.isActive()))
                 .toList();
     }
 
@@ -279,6 +324,14 @@ public class TimeClockService {
     private void ensureNotFuture(Instant instant) {
         if (instant.isAfter(Instant.now().plusSeconds(60))) {
             throw new IllegalArgumentException("Não é possível registrar uma marcação futura");
+        }
+    }
+
+    private void validatePeriod(LocalDate from, LocalDate to) {
+        if (from == null || to == null) throw new IllegalArgumentException("Informe o período do relatório");
+        if (from.isAfter(to)) throw new IllegalArgumentException("A data inicial deve ser anterior à data final");
+        if (ChronoUnit.DAYS.between(from, to) > 365) {
+            throw new IllegalArgumentException("O relatório pode abranger no máximo 366 dias");
         }
     }
 

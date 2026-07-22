@@ -40,4 +40,10 @@ public class Appointment extends TenantEntity {
 
     @Column(length = 1000)
     private String notes;
+
+    private Instant confirmationRequestedAt;
+
+    private Instant confirmedAt;
+
+    private Instant rescheduleRequestedAt;
 }

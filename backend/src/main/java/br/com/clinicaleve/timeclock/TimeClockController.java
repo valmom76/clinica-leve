@@ -2,6 +2,8 @@ package br.com.clinicaleve.timeclock;
 
 import br.com.clinicaleve.timeclock.TimeClockDtos.DaySummaryResponse;
 import br.com.clinicaleve.timeclock.TimeClockDtos.EntryResponse;
+import br.com.clinicaleve.timeclock.TimeClockDtos.EmployeeReportResponse;
+import br.com.clinicaleve.timeclock.TimeClockDtos.ReportEmployeeResponse;
 import br.com.clinicaleve.timeclock.TimeClockDtos.ManualEntryRequest;
 import br.com.clinicaleve.timeclock.TimeClockDtos.PunchRequest;
 import br.com.clinicaleve.timeclock.TimeClockDtos.UpdateEntryRequest;
@@ -51,6 +53,22 @@ public class TimeClockController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         return service.teamDay(date);
+    }
+
+    @GetMapping("/reports/employee")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'HR')")
+    EmployeeReportResponse employeeReport(
+            @RequestParam String userId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        return service.employeeReport(userId, from, to);
+    }
+
+    @GetMapping("/reports/employees")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'HR')")
+    List<ReportEmployeeResponse> reportEmployees() {
+        return service.reportEmployees();
     }
 
     @PostMapping("/entries")

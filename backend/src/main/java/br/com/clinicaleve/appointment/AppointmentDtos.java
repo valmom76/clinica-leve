@@ -4,7 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 
 public final class AppointmentDtos {
 
@@ -34,7 +37,22 @@ public final class AppointmentDtos {
             Instant startAt,
             Instant endAt,
             AppointmentStatus status,
-            String notes
+            String notes,
+            Instant confirmationRequestedAt,
+            Instant confirmedAt,
+            Instant rescheduleRequestedAt
+    ) {
+    }
+
+    public record AppointmentReportResponse(
+            LocalDate from,
+            LocalDate to,
+            int total,
+            int completed,
+            int cancelled,
+            int noShows,
+            BigDecimal attendanceRate,
+            List<AppointmentResponse> appointments
     ) {
     }
 }

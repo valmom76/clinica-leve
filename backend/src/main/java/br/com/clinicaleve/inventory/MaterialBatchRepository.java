@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface MaterialBatchRepository extends JpaRepository<MaterialBatch, String> {
 
@@ -24,4 +25,6 @@ public interface MaterialBatchRepository extends JpaRepository<MaterialBatch, St
             String materialId,
             BigDecimal quantity
     );
+
+    List<MaterialBatch> findByClinicIdAndIdIn(String clinicId, Set<String> ids);
 }

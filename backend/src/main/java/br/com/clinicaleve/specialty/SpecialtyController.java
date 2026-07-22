@@ -36,8 +36,12 @@ public class SpecialtyController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     SpecialtyResponse create(@Valid @RequestBody SpecialtyRequest request) {
+        var clinicId = TenantAccess.currentClinicId();
+        if (repository.existsByClinicIdAndNameIgnoreCase(clinicId, request.name().trim())) {
+            throw new IllegalArgumentException("Já existe uma especialidade com este nome");
+        }
         var entity = new Specialty();
-        entity.setClinicId(TenantAccess.currentClinicId());
+        entity.setClinicId(clinicId);
         entity.setName(request.name().trim());
         entity.setColor(request.color());
         return SpecialtyResponse.from(repository.save(entity));

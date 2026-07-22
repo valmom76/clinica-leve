@@ -45,7 +45,14 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/**", "/actuator/health/**").permitAll()
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/public/branding/**",
+                                "/api/public/signatures/**",
+                                "/api/webhooks/asaas",
+                                "/api/webhooks/whatsapp",
+                                "/actuator/health/**"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt

@@ -2,12 +2,15 @@ package br.com.clinicaleve.professional;
 
 import br.com.clinicaleve.professional.ProfessionalDtos.ProfessionalRequest;
 import br.com.clinicaleve.professional.ProfessionalDtos.ProfessionalResponse;
+import br.com.clinicaleve.professional.ProfessionalDtos.ProfessionalUpdateRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -27,10 +30,25 @@ public class ProfessionalController {
         return service.list();
     }
 
+    @GetMapping("/management")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    List<ProfessionalResponse> listForManagement() {
+        return service.listForManagement();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     ProfessionalResponse create(@Valid @RequestBody ProfessionalRequest request) {
         return service.create(request);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    ProfessionalResponse update(
+            @PathVariable String id,
+            @Valid @RequestBody ProfessionalUpdateRequest request
+    ) {
+        return service.update(id, request);
     }
 }

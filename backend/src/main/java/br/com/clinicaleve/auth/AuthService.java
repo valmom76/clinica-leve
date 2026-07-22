@@ -5,6 +5,7 @@ import br.com.clinicaleve.auth.AuthDtos.LoginRequest;
 import br.com.clinicaleve.auth.AuthDtos.LoginResponse;
 import br.com.clinicaleve.auth.AuthDtos.UserSummary;
 import br.com.clinicaleve.tenant.ClinicRepository;
+import br.com.clinicaleve.tenant.ClinicBrandingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,12 +38,20 @@ public class AuthService {
                 token.value(),
                 "Bearer",
                 token.expiresInSeconds(),
-                new UserSummary(user.getId(), user.getName(), user.getEmail(), user.getRole()),
+                new UserSummary(
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getRole(),
+                        user.getProfessionalId()
+                ),
                 new ClinicSummary(
                         clinic.getId(),
                         clinic.getName(),
                         clinic.getSlug(),
-                        clinic.getTimezone()
+                        clinic.getTimezone(),
+                        ClinicBrandingService.logoUrl(clinic),
+                        clinic.getThemeKey()
                 )
         );
     }

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -30,6 +31,14 @@ public class Patient extends TenantEntity {
 
     @Column(nullable = false, length = 30)
     private String phone;
+
+    @Column(nullable = false)
+    private boolean whatsappOptIn;
+
+    private Instant whatsappOptInAt;
+
+    @Column(length = 36)
+    private String whatsappOptInRecordedBy;
 
     @Column(nullable = false)
     private boolean active = true;

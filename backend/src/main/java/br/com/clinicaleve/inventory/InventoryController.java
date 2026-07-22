@@ -8,6 +8,10 @@ import br.com.clinicaleve.inventory.InventoryDtos.MovementRequest;
 import br.com.clinicaleve.inventory.InventoryDtos.MovementResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,10 +21,19 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
+import br.com.clinicaleve.inventory.InventoryReportDtos.MovementReportResponse;
+import br.com.clinicaleve.inventory.InventoryImportDtos.ImportConfirmRequest;
+import br.com.clinicaleve.inventory.InventoryImportDtos.ImportPreviewResponse;
+import br.com.clinicaleve.inventory.InventoryImportDtos.ImportResult;
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/api/inventory")
@@ -30,6 +43,8 @@ public class InventoryController {
 
     private final MaterialCategoryService categoryService;
     private final InventoryService inventoryService;
+    private final InventoryReportService reportService;
+    private final InventoryImportService importService;
 
     @GetMapping("/categories")
     List<CategoryResponse> categories() {
@@ -75,5 +90,38 @@ public class InventoryController {
     @GetMapping("/materials/{id}/movements")
     List<MovementResponse> movements(@PathVariable String id) {
         return inventoryService.movements(id);
+    }
+
+    @GetMapping("/reports/movements")
+    MovementReportResponse movementReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String materialId,
+            @RequestParam(required = false) StockMovementType type
+    ) {
+        return reportService.movements(from, to, materialId, type);
+    }
+
+    @GetMapping(value = "/materials/import-template", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    ResponseEntity<byte[]> importTemplate() {
+        var disposition = ContentDisposition.attachment()
+                .filename("modelo-importacao-materiais.xlsx", StandardCharsets.UTF_8)
+                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                .body(importService.template());
+    }
+
+    @PostMapping(value = "/materials/import-preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ImportPreviewResponse importPreview(@RequestPart("file") MultipartFile file) {
+        return importService.preview(file);
+    }
+
+    @PostMapping(value = "/materials/import-confirm", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ImportResult importConfirm(
+            @RequestPart("file") MultipartFile file,
+            @Valid @RequestPart("decisions") ImportConfirmRequest request
+    ) {
+        return importService.confirm(file, request);
     }
 }

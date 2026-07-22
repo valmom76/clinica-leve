@@ -12,7 +12,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         jdbc:
@@ -44,6 +44,8 @@ security:
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
 
 app:
+  uploads:
+    directory: ${APP_UPLOAD_DIRECTORY:./uploads}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
   seed:
@@ -53,3 +55,15 @@ app:
     admin-name: ${SEED_ADMIN_NAME:Administrador}
     admin-email: ${SEED_ADMIN_EMAIL:admin@clinicaleve.local}
     admin-password: ${SEED_ADMIN_PASSWORD:Admin@123}
+  asaas:
+    enabled: ${ASAAS_ENABLED:false}
+    environment: ${ASAAS_ENVIRONMENT:sandbox}
+    api-key: ${ASAAS_API_KEY:}
+    webhook-token: ${ASAAS_WEBHOOK_TOKEN:}
+    frontend-url: ${FRONTEND_PUBLIC_URL:http://localhost:5173}
+  signature:
+    enabled: ${SIGNATURE_ENABLED:true}
+    master-key: ${SIGNATURE_MASTER_KEY:}
+    storage-directory: ${SIGNATURE_STORAGE_DIRECTORY:${APP_UPLOAD_DIRECTORY:./uploads}/signed-documents}
+    verification-base-url: ${SIGNATURE_VERIFICATION_BASE_URL:${FRONTEND_PUBLIC_URL:http://localhost:5173}/verify}
+    csc-providers-json: ${SIGNATURE_CSC_PROVIDERS_JSON:[]}

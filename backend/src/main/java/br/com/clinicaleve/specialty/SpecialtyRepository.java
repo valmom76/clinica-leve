@@ -10,4 +10,6 @@ public interface SpecialtyRepository extends JpaRepository<Specialty, String> {
     List<Specialty> findByClinicIdAndActiveTrueOrderByName(String clinicId);
 
     Optional<Specialty> findByIdAndClinicId(String id, String clinicId);
+
+    boolean existsByClinicIdAndNameIgnoreCase(String clinicId, String name);
 }

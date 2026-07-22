@@ -28,6 +28,10 @@ public interface AppUserRepository extends JpaRepository<AppUser, String> {
 
     boolean existsByClinicIdAndEmailIgnoreCaseAndIdNot(String clinicId, String email, String id);
 
+    boolean existsByClinicIdAndProfessionalIdAndIdNot(String clinicId, String professionalId, String id);
+
+    boolean existsByClinicIdAndProfessionalIdAndActiveTrue(String clinicId, String professionalId);
+
     long countByClinicIdAndRoleAndActiveTrue(String clinicId, Role role);
 
     boolean existsByClinicId(String clinicId);
