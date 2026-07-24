@@ -206,6 +206,20 @@ input:focus, select:focus, textarea:focus {
 .danger-button { color: #a6503e; border: 1px solid #eccfc5; background: #fff7f4; }
 .danger-button:disabled { opacity: .6; cursor: wait; }
 .login-button { width: 100%; min-height: 46px; margin-top: 6px; }
+.login-secondary-button {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 9px;
+  color: var(--theme-medium);
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.simple-login-page { grid-template-columns: 1fr; background: var(--theme-background); }
+.reset-password-panel { min-height: 100vh; background: transparent; }
+.link-button { text-decoration: none; }
 .form-error, .page-error {
   padding: 11px 13px;
   color: #a74f3d;
@@ -215,7 +229,7 @@ input:focus, select:focus, textarea:focus {
   font-size: 11px;
 }
 .form-error { margin-bottom: 15px; }
-.form-success { padding: 11px 13px; color: #31685d; background: var(--sage-soft); border: 1px solid #d1e2d9; border-radius: 9px; font-size: 11px; }
+.form-success { margin-bottom: 15px; padding: 11px 13px; color: #31685d; background: var(--sage-soft); border: 1px solid #d1e2d9; border-radius: 9px; font-size: 11px; }
 
 .portal { min-height: 100vh; }
 .sidebar {

@@ -36,6 +36,11 @@ export type Session = {
   };
 };
 
+export type AuthCapabilities = {
+  passwordRecoveryEnabled: boolean;
+  minimumPasswordLength: number;
+};
+
 export type ClinicBranding = {
   clinicName: string;
   clinicSlug: string;

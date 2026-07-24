@@ -3,6 +3,7 @@ import type {
   AppointmentContextReport,
   AppointmentMessage,
   AppointmentMessagingSettings,
+  AuthCapabilities,
   BillingOverview,
   BillingPaymentMethod,
   BillingProfile,
@@ -48,6 +49,7 @@ import type {
 
 const API_URL = import.meta.env.VITE_API_URL ?? "/api";
 const SESSION_KEY = "clinica-leve.session";
+export const SESSION_EXPIRED_EVENT = "clinica-leve:session-expired";
 
 export function loadSession(): Session | null {
   const stored = localStorage.getItem(SESSION_KEY);
@@ -87,6 +89,10 @@ async function request<T>(
     const payload = (await response.json().catch(() => null)) as {
       message?: string;
     } | null;
+    if (response.status === 401 && session) {
+      saveSession(null);
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    }
     throw new Error(payload?.message ?? "Não foi possível concluir a operação");
   }
 
@@ -102,6 +108,10 @@ async function requestBlob(path: string, session: Session) {
   });
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    if (response.status === 401) {
+      saveSession(null);
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    }
     throw new Error(payload?.message ?? "Não foi possível baixar o arquivo");
   }
   return response.blob();
@@ -116,6 +126,23 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+
+  authCapabilities: () => request<AuthCapabilities>("/auth/capabilities"),
+
+  forgotPassword: (payload: { clinicSlug: string; email: string }) =>
+    request<void>("/auth/password/forgot", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  resetPassword: (payload: { token: string; newPassword: string }) =>
+    request<void>("/auth/password/reset", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  logoutAll: (session: Session) =>
+    request<void>("/auth/logout-all", { method: "POST" }, session),
 
   patients: (session: Session, search = "") =>
     request<Patient[]>(
@@ -300,7 +327,15 @@ export const api = {
 
   createUser: (
     session: Session,
-    payload: { name: string; email: string; password: string; role: Role; professionalId?: string; expectedDailyMinutes: number },
+    payload: {
+      name: string;
+      email: string;
+      password?: string;
+      sendInvitation: boolean;
+      role: Role;
+      professionalId?: string;
+      expectedDailyMinutes: number;
+    },
   ) =>
     request<ClinicUser>(
       "/users",

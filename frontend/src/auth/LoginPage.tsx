@@ -11,8 +11,21 @@ type LoginPageProps = {
 export function LoginPage({ onAuthenticated }: LoginPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [clinicSlug, setClinicSlug] = useState("clinica-demo");
+  const [clinicSlug, setClinicSlug] = useState(() =>
+    new URLSearchParams(window.location.search).get("clinic")
+      ?? localStorage.getItem("clinica-leve.last-clinic")
+      ?? "",
+  );
   const [branding, setBranding] = useState<ClinicBranding | null>(null);
+  const [recovering, setRecovering] = useState(false);
+  const [recoveryAvailable, setRecoveryAvailable] = useState(false);
+  const [recoverySent, setRecoverySent] = useState(false);
+
+  useEffect(() => {
+    void api.authCapabilities()
+      .then((capabilities) => setRecoveryAvailable(capabilities.passwordRecoveryEnabled))
+      .catch(() => setRecoveryAvailable(false));
+  }, []);
 
   useEffect(() => {
     const normalized = clinicSlug.trim().toLowerCase();
@@ -42,9 +55,28 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
         email: String(data.get("email")),
         password: String(data.get("password")),
       });
+      localStorage.setItem("clinica-leve.last-clinic", session.clinic.slug);
       onAuthenticated(session);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Falha ao entrar");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function recover(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    const data = new FormData(event.currentTarget);
+    try {
+      await api.forgotPassword({
+        clinicSlug: String(data.get("clinicSlug")),
+        email: String(data.get("email")),
+      });
+      setRecoverySent(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao solicitar a recuperação");
     } finally {
       setLoading(false);
     }
@@ -71,14 +103,17 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       </section>
 
       <section className="login-form-panel">
-        <form className="login-form" onSubmit={submit}>
+        <form className="login-form" onSubmit={recovering ? recover : submit}>
           {branding && <div className="login-clinic-identity">
             {branding.logoUrl ? <img src={branding.logoUrl} alt={`Logomarca ${branding.clinicName}`} /> : <span><HeartPulse size={21} /></span>}
             <strong>{branding.clinicName}</strong>
           </div>}
-          <span className="eyebrow">BEM-VINDO</span>
-          <h2>Acesse sua clínica</h2>
-          <p>Informe o identificador da empresa e suas credenciais.</p>
+          <span className="eyebrow">{recovering ? "RECUPERAÇÃO DE ACESSO" : "BEM-VINDO"}</span>
+          <h2>{recovering ? "Redefina sua senha" : "Acesse sua clínica"}</h2>
+          <p>{recovering
+            ? "Informe a clínica e o e-mail. Se o cadastro existir, enviaremos um link seguro."
+            : "Informe o identificador da empresa e suas credenciais."}</p>
+          {recoverySent && <div className="form-success">Solicitação recebida. Confira seu e-mail e a caixa de spam.</div>}
           {error && <div className="form-error">{error}</div>}
           <label>
             Clínica
@@ -89,22 +124,31 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             <input
               name="email"
               type="email"
-              defaultValue="admin@clinicaleve.local"
               required
             />
           </label>
-          <label>
-            Senha
-            <input
-              name="password"
-              type="password"
-              defaultValue="Admin@123"
-              required
-            />
-          </label>
+          {!recovering && <label>
+              Senha
+              <input name="password" type="password" autoComplete="current-password" required />
+            </label>}
           <button className="primary-button login-button" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar na plataforma"}
+            {loading
+              ? (recovering ? "Enviando..." : "Entrando...")
+              : (recovering ? "Enviar link de recuperação" : "Entrar na plataforma")}
           </button>
+          {recoveryAvailable && (
+            <button
+              type="button"
+              className="login-secondary-button"
+              onClick={() => {
+                setRecovering((current) => !current);
+                setRecoverySent(false);
+                setError("");
+              }}
+            >
+              {recovering ? "Voltar para o login" : "Esqueci minha senha"}
+            </button>
+          )}
         </form>
       </section>
     </main>

@@ -18,12 +18,21 @@ export function UserModal({ session, user, initialProfessional, onClose, onSaved
   const [selectedRole, setSelectedRole] = useState<Role>(user?.role ?? (initialProfessional ? "PROFESSIONAL" : "RECEPTIONIST"));
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [professionalId, setProfessionalId] = useState(user?.professionalId ?? initialProfessional?.id ?? "");
+  const [invitationAvailable, setInvitationAvailable] = useState(false);
+  const [sendInvitation, setSendInvitation] = useState(false);
 
   useEffect(() => {
     void api.professionals(session)
       .then(setProfessionals)
       .catch(() => setProfessionals([]));
   }, [session]);
+
+  useEffect(() => {
+    if (user) return;
+    void api.authCapabilities()
+      .then((capabilities) => setInvitationAvailable(capabilities.passwordRecoveryEnabled))
+      .catch(() => setInvitationAvailable(false));
+  }, [user]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,7 +55,11 @@ export function UserModal({ session, user, initialProfessional, onClose, onSaved
             password: password || undefined,
             active: data.get("active") === "on",
           })
-        : await api.createUser(session, { ...payload, password });
+        : await api.createUser(session, {
+            ...payload,
+            password: sendInvitation ? undefined : password,
+            sendInvitation,
+          });
       onSaved(saved);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Falha ao salvar acesso");
@@ -112,15 +125,32 @@ export function UserModal({ session, user, initialProfessional, onClose, onSaved
               required
             />
           </label>
+          {!user && invitationAvailable && (
+            <label className="access-checkbox full">
+              <input
+                name="sendInvitation"
+                type="checkbox"
+                checked={sendInvitation}
+                onChange={(event) => setSendInvitation(event.target.checked)}
+              />
+              <span>Enviar convite por e-mail para o usuário criar a própria senha</span>
+            </label>
+          )}
           <label className="full">
-            {user ? "Nova senha (deixe em branco para manter)" : "Senha temporária"}
+            {user
+              ? "Nova senha (deixe em branco para manter)"
+              : sendInvitation
+                ? "Senha criada pelo usuário no convite"
+                : "Senha temporária"}
             <input
               name="password"
               type="password"
-              minLength={8}
-              required={!user}
+              minLength={10}
+              required={!user && !sendInvitation}
+              disabled={!user && sendInvitation}
               autoComplete="new-password"
             />
+            {!user && !sendInvitation && <small>Use maiúscula, minúscula, número e caractere especial.</small>}
           </label>
           {user && (
             <label className="access-checkbox full">
