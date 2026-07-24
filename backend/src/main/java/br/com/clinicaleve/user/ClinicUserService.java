@@ -3,6 +3,8 @@ package br.com.clinicaleve.user;
 import br.com.clinicaleve.auth.AppUser;
 import br.com.clinicaleve.auth.AppUserRepository;
 import br.com.clinicaleve.auth.Role;
+import br.com.clinicaleve.auth.AccountRecoveryService;
+import br.com.clinicaleve.auth.PasswordPolicy;
 import br.com.clinicaleve.professional.ProfessionalRepository;
 import br.com.clinicaleve.shared.TenantAccess;
 import br.com.clinicaleve.user.UserDtos.CreateUserRequest;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.time.Instant;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +26,8 @@ public class ClinicUserService {
     private final AppUserRepository repository;
     private final ProfessionalRepository professionalRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordPolicy passwordPolicy;
+    private final AccountRecoveryService accountRecoveryService;
 
     @Transactional(readOnly = true)
     public List<UserResponse> list() {
@@ -32,7 +38,7 @@ public class ClinicUserService {
     }
 
     @Transactional
-    public UserResponse create(CreateUserRequest request) {
+    public UserResponse create(CreateUserRequest request, String requestedIp) {
         var clinicId = TenantAccess.currentClinicId();
         var email = normalizeEmail(request.email());
         if (repository.existsByClinicIdAndEmailIgnoreCase(clinicId, email)) {
@@ -43,11 +49,24 @@ public class ClinicUserService {
         user.setClinicId(clinicId);
         user.setName(request.name().trim());
         user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        if (request.sendInvitation()) {
+            user.setPasswordHash(accountRecoveryService.createUnusableRandomPassword());
+        } else {
+            if (request.password() == null || request.password().isBlank()) {
+                throw new IllegalArgumentException("Informe uma senha ou envie um convite por e-mail");
+            }
+            passwordPolicy.validate(request.password());
+            user.setPasswordHash(passwordEncoder.encode(request.password()));
+            user.setCredentialsUpdatedAt(Instant.now());
+        }
         user.setRole(request.role());
         user.setProfessionalId(validateProfessionalLink(clinicId, request.role(), request.professionalId(), null));
         user.setExpectedDailyMinutes(request.expectedDailyMinutes() == null ? 480 : request.expectedDailyMinutes());
-        return UserResponse.from(repository.save(user));
+        var saved = repository.save(user);
+        if (request.sendInvitation()) {
+            accountRecoveryService.sendInvitation(saved, requestedIp);
+        }
+        return UserResponse.from(saved);
     }
 
     @Transactional
@@ -74,6 +93,11 @@ public class ClinicUserService {
             throw new IllegalStateException("A clínica precisa manter pelo menos um administrador ativo");
         }
 
+        var securityChanged = !user.getEmail().equalsIgnoreCase(email)
+                || user.getRole() != request.role()
+                || user.isActive() != request.active()
+                || !Objects.equals(user.getProfessionalId(), normalizedProfessionalId(request.professionalId()));
+
         user.setName(request.name().trim());
         user.setEmail(email);
         user.setRole(request.role());
@@ -83,7 +107,13 @@ public class ClinicUserService {
         }
         user.setActive(request.active());
         if (request.password() != null && !request.password().isBlank()) {
+            passwordPolicy.validate(request.password());
             user.setPasswordHash(passwordEncoder.encode(request.password()));
+            user.setCredentialsUpdatedAt(Instant.now());
+            securityChanged = true;
+        }
+        if (securityChanged) {
+            user.setTokenVersion(user.getTokenVersion() + 1);
         }
         return UserResponse.from(repository.save(user));
     }
@@ -93,7 +123,7 @@ public class ClinicUserService {
     }
 
     private String validateProfessionalLink(String clinicId, Role role, String professionalId, String userId) {
-        var normalizedId = professionalId == null || professionalId.isBlank() ? null : professionalId.trim();
+        var normalizedId = normalizedProfessionalId(professionalId);
         if (role == Role.PROFESSIONAL && normalizedId == null) {
             throw new IllegalArgumentException("O perfil profissional precisa estar vinculado a um profissional da clínica");
         }
@@ -113,5 +143,9 @@ public class ClinicUserService {
             throw new IllegalArgumentException("Este profissional já está vinculado a outro usuário");
         }
         return normalizedId;
+    }
+
+    private String normalizedProfessionalId(String professionalId) {
+        return professionalId == null || professionalId.isBlank() ? null : professionalId.trim();
     }
 }

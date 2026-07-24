@@ -224,7 +224,7 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.CANCELLED);
         var saved = repository.save(appointment);
         messagingService.cancelPendingForAppointment(saved.getId(), clinicId);
-        return responses(clinicId, List.of(saved)).getFirst();
+        return responses(clinicId, List.of(saved)).get(0);
     }
 
     private Map<String, Patient> mapPatients(String clinicId, List<Appointment> appointments) {

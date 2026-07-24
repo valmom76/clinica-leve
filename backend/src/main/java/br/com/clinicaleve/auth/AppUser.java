@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,6 +37,11 @@ public class AppUser extends TenantEntity {
 
     @Column(nullable = false)
     private int expectedDailyMinutes = 480;
+
+    @Column(nullable = false)
+    private int tokenVersion;
+
+    private Instant credentialsUpdatedAt;
 
     @Column(nullable = false)
     private boolean active = true;

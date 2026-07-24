@@ -17,7 +17,7 @@ public class PdfSignatureVerifier {
             if (signatures.isEmpty()) {
                 return false;
             }
-            var signature = signatures.getLast();
+            var signature = signatures.get(signatures.size() - 1);
             var cms = new CMSSignedData(
                     new CMSProcessableByteArray(signature.getSignedContent(pdfBytes)),
                     signature.getContents(pdfBytes)
@@ -30,10 +30,10 @@ public class PdfSignatureVerifier {
             if (matches.isEmpty()) {
                 return false;
             }
-            var certificate = matches.iterator().next();
+            var certificate = (X509CertificateHolder) matches.iterator().next();
             return signer.verify(new JcaSimpleSignerInfoVerifierBuilder()
                     .setProvider(BouncyCastleProvider.PROVIDER_NAME)
-                    .build((X509CertificateHolder) certificate));
+                    .build(certificate));
         } catch (Exception exception) {
             return false;
         }

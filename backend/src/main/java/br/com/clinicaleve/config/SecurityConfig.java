@@ -1,5 +1,6 @@
 package br.com.clinicaleve.config;
 
+import br.com.clinicaleve.auth.UserSessionValidationFilter;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,6 +30,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.time.Clock;
 
 @Configuration
 @EnableMethodSecurity
@@ -37,7 +40,8 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtDecoder jwtDecoder,
-            JwtAuthenticationConverter jwtAuthenticationConverter
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            UserSessionValidationFilter userSessionValidationFilter
     ) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -46,7 +50,10 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/api/auth/login",
+                                "/api/auth/capabilities",
+                                "/api/auth/password/forgot",
+                                "/api/auth/password/reset",
                                 "/api/public/branding/**",
                                 "/api/public/signatures/**",
                                 "/api/webhooks/asaas",
@@ -58,7 +65,13 @@ public class SecurityConfig {
                         .jwt(jwt -> jwt
                                 .decoder(jwtDecoder)
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter)))
+                .addFilterAfter(userSessionValidationFilter, BearerTokenAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    Clock clock() {
+        return Clock.systemUTC();
     }
 
     @Bean

@@ -29,7 +29,7 @@ public class CmsSignatureService {
 
     public byte[] sign(byte[] content, DigitalSignatureProvider.SigningIdentity identity) {
         try {
-            var certificate = identity.certificateChain().getFirst();
+            var certificate = identity.certificateChain().get(0);
             var certificateHash = MessageDigest.getInstance("SHA-256").digest(certificate.getEncoded());
             var essCert = new ESSCertIDv2(
                     new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha256),

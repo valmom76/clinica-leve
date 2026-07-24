@@ -17,7 +17,8 @@ public final class UserDtos {
     public record CreateUserRequest(
             @NotBlank @Size(max = 160) String name,
             @NotBlank @Email @Size(max = 190) String email,
-            @NotBlank @Size(min = 8, max = 72) String password,
+            @Size(min = 10, max = 72) String password,
+            boolean sendInvitation,
             @NotNull Role role,
             String professionalId,
             @Min(60) @Max(720) Integer expectedDailyMinutes
@@ -27,7 +28,7 @@ public final class UserDtos {
     public record UpdateUserRequest(
             @NotBlank @Size(max = 160) String name,
             @NotBlank @Email @Size(max = 190) String email,
-            @Size(min = 8, max = 72) String password,
+            @Size(min = 10, max = 72) String password,
             @NotNull Role role,
             String professionalId,
             @Min(60) @Max(720) Integer expectedDailyMinutes,

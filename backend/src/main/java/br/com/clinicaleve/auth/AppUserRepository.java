@@ -16,6 +16,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, String> {
 
     Optional<AppUser> findByIdAndClinicId(String id, String clinicId);
 
+    Optional<AppUser> findByIdAndClinicIdAndActiveTrue(String id, String clinicId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from AppUser u where u.id = :id and u.clinicId = :clinicId")
     Optional<AppUser> findForUpdate(@Param("id") String id, @Param("clinicId") String clinicId);

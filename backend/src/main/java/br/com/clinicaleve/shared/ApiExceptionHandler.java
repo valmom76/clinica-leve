@@ -2,6 +2,7 @@ package br.com.clinicaleve.shared;
 
 import br.com.clinicaleve.billing.AsaasIntegrationException;
 import br.com.clinicaleve.billing.SubscriptionPaymentRequiredException;
+import br.com.clinicaleve.auth.LoginRateLimitException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -45,6 +46,13 @@ public class ApiExceptionHandler {
         return response(HttpStatus.UNAUTHORIZED, "Clínica, e-mail ou senha inválidos", null);
     }
 
+    @ExceptionHandler(LoginRateLimitException.class)
+    ResponseEntity<Map<String, Object>> loginRateLimit(LoginRateLimitException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(exception.getRetryAfterSeconds()))
+                .body(body(HttpStatus.TOO_MANY_REQUESTS, exception.getMessage(), null));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<Map<String, Object>> forbidden(AccessDeniedException exception) {
         return response(HttpStatus.FORBIDDEN, exception.getMessage(), null);
@@ -55,13 +63,17 @@ public class ApiExceptionHandler {
             String message,
             Object details
     ) {
-        var body = new LinkedHashMap<String, Object>();
-        body.put("timestamp", Instant.now());
-        body.put("status", status.value());
-        body.put("message", message);
+        return ResponseEntity.status(status).body(body(status, message, details));
+    }
+
+    private Map<String, Object> body(HttpStatus status, String message, Object details) {
+        var responseBody = new LinkedHashMap<String, Object>();
+        responseBody.put("timestamp", Instant.now());
+        responseBody.put("status", status.value());
+        responseBody.put("message", message);
         if (details != null) {
-            body.put("details", details);
+            responseBody.put("details", details);
         }
-        return ResponseEntity.status(status).body(body);
+        return responseBody;
     }
 }

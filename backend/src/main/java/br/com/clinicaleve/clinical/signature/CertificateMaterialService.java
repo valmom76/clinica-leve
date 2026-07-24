@@ -39,7 +39,7 @@ public class CertificateMaterialService {
                 throw new IllegalArgumentException("O certificado não possui uma cadeia X.509 válida");
             }
             var metadata = metadata(chain);
-            validateForSigning(chain.getFirst());
+            validateForSigning(chain.get(0));
             return new LoadedPkcs12(privateKey, List.copyOf(chain), metadata);
         } catch (IllegalArgumentException exception) {
             throw exception;
@@ -66,7 +66,7 @@ public class CertificateMaterialService {
             if (chain.isEmpty()) {
                 throw new IllegalArgumentException("O provedor remoto não retornou o certificado");
             }
-            validateForSigning(chain.getFirst());
+            validateForSigning(chain.get(0));
             return metadata(chain);
         } catch (IllegalArgumentException exception) {
             throw exception;
@@ -99,7 +99,7 @@ public class CertificateMaterialService {
     }
 
     private CertificateMetadata metadata(List<X509Certificate> chain) throws Exception {
-        var certificate = chain.getFirst();
+        var certificate = chain.get(0);
         return new CertificateMetadata(
                 certificate.getSubjectX500Principal().getName(),
                 certificate.getIssuerX500Principal().getName(),

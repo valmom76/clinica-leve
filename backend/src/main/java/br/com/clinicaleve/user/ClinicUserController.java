@@ -4,6 +4,7 @@ import br.com.clinicaleve.user.UserDtos.CreateUserRequest;
 import br.com.clinicaleve.user.UserDtos.UpdateUserRequest;
 import br.com.clinicaleve.user.UserDtos.UserResponse;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,8 +34,11 @@ public class ClinicUserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    UserResponse create(@Valid @RequestBody CreateUserRequest request) {
-        return service.create(request);
+    UserResponse create(
+            @Valid @RequestBody CreateUserRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        return service.create(request, servletRequest.getRemoteAddr());
     }
 
     @PutMapping("/{id}")

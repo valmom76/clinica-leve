@@ -37,6 +37,7 @@ public class JwtService {
                 .claim("email", user.getEmail())
                 .claim("name", user.getName())
                 .claim("role", user.getRole().name())
+                .claim("tokenVersion", user.getTokenVersion())
                 .build();
         var headers = org.springframework.security.oauth2.jwt.JwsHeader
                 .with(MacAlgorithm.HS256)

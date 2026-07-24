@@ -133,7 +133,7 @@ public class DocumentSignatureService {
         return response(signature, document.getVerificationCode());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DocumentSignatureResponse get(String documentId) {
         var user = accessService.currentUser();
         var document = documentRepository.findByIdAndClinicId(documentId, user.getClinicId())
@@ -141,10 +141,11 @@ public class DocumentSignatureService {
         accessService.assertCanAccess(user, document.getProfessionalId());
         var signature = signatureRepository.findByDocumentIdAndClinicId(documentId, user.getClinicId())
                 .orElseThrow(() -> new IllegalArgumentException("Documento ainda não possui assinatura digital"));
+        auditService.register(user, "DOCUMENT_SIGNATURE_VIEWED", "CLINICAL_DOCUMENT", documentId, null);
         return response(signature, document.getVerificationCode());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public SignedPdf download(String documentId) {
         var user = accessService.currentUser();
         var document = documentRepository.findByIdAndClinicId(documentId, user.getClinicId())
@@ -153,6 +154,7 @@ public class DocumentSignatureService {
         var signature = signatureRepository.findByDocumentIdAndClinicId(documentId, user.getClinicId())
                 .filter(item -> item.getStatus() == DocumentSignatureStatus.SIGNED)
                 .orElseThrow(() -> new IllegalStateException("Documento ainda não foi assinado"));
+        auditService.register(user, "SIGNED_PDF_DOWNLOADED", "CLINICAL_DOCUMENT", documentId, null);
         return new SignedPdf(
                 storage.read(signature.getSignedPdfPath()),
                 safeFilename(document.getTitle()) + "-assinado.pdf"

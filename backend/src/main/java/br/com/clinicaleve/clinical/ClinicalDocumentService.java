@@ -47,23 +47,34 @@ public class ClinicalDocumentService {
     private final TemplateRenderer renderer;
     private final DocumentSignatureRepository signatureRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<DocumentResponse> list(String encounterId) {
         var encounter = loadEncounter(encounterId);
-        accessService.assertCanAccess(accessService.currentUser(), encounter.getProfessionalId());
-        return repository.findByClinicIdAndEncounterIdOrderByCreatedAtDesc(
+        var user = accessService.currentUser();
+        accessService.assertCanAccess(user, encounter.getProfessionalId());
+        var documents = repository.findByClinicIdAndEncounterIdOrderByCreatedAtDesc(
                         encounter.getClinicId(),
                         encounterId
                 )
                 .stream()
                 .map(this::response)
                 .toList();
+        auditService.register(
+                user,
+                "ENCOUNTER_DOCUMENTS_VIEWED",
+                "CLINICAL_ENCOUNTER",
+                encounterId,
+                "{\"documentCount\":" + documents.size() + "}"
+        );
+        return documents;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DocumentResponse get(String id) {
         var document = load(id);
-        accessService.assertCanAccess(accessService.currentUser(), document.getProfessionalId());
+        var user = accessService.currentUser();
+        accessService.assertCanAccess(user, document.getProfessionalId());
+        auditService.register(user, "DOCUMENT_VIEWED", "CLINICAL_DOCUMENT", id, null);
         return response(document);
     }
 

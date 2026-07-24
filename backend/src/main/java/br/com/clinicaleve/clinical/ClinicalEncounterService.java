@@ -30,7 +30,7 @@ public class ClinicalEncounterService {
     private final ClinicalAccessService accessService;
     private final ClinicalAuditService auditService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<EncounterResponse> list(String patientId) {
         var clinicId = TenantAccess.currentClinicId();
         var user = accessService.currentUser();
@@ -38,17 +38,29 @@ public class ClinicalEncounterService {
                 ? repository.findByClinicIdOrderByCreatedAtDesc(clinicId)
                 : repository.findByClinicIdAndPatientIdOrderByCreatedAtDesc(clinicId, patientId);
 
-        return encounters.stream()
+        var response = encounters.stream()
                 .filter(encounter -> user.getRole() == br.com.clinicaleve.auth.Role.ADMIN
                         || encounter.getProfessionalId().equals(user.getProfessionalId()))
                 .map(this::response)
                 .toList();
+        if (patientId != null && !patientId.isBlank()) {
+            auditService.register(
+                    user,
+                    "PATIENT_CLINICAL_HISTORY_VIEWED",
+                    "PATIENT",
+                    patientId,
+                    "{\"encounterCount\":" + response.size() + "}"
+            );
+        }
+        return response;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public EncounterResponse get(String id) {
         var encounter = load(id);
-        accessService.assertCanAccess(accessService.currentUser(), encounter.getProfessionalId());
+        var user = accessService.currentUser();
+        accessService.assertCanAccess(user, encounter.getProfessionalId());
+        auditService.register(user, "ENCOUNTER_VIEWED", "CLINICAL_ENCOUNTER", id, null);
         return response(encounter);
     }
 
@@ -145,11 +157,12 @@ public class ClinicalEncounterService {
         return response(saved);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<EncounterVersionResponse> versions(String id) {
         var encounter = load(id);
-        accessService.assertCanAccess(accessService.currentUser(), encounter.getProfessionalId());
-        return versionRepository
+        var user = accessService.currentUser();
+        accessService.assertCanAccess(user, encounter.getProfessionalId());
+        var versions = versionRepository
                 .findByClinicIdAndEncounterIdOrderByVersionNumberDesc(encounter.getClinicId(), id)
                 .stream()
                 .map(version -> new EncounterVersionResponse(
@@ -166,6 +179,14 @@ public class ClinicalEncounterService {
                         version.getCreatedAt()
                 ))
                 .toList();
+        auditService.register(
+                user,
+                "ENCOUNTER_HISTORY_VIEWED",
+                "CLINICAL_ENCOUNTER",
+                id,
+                "{\"versionCount\":" + versions.size() + "}"
+        );
+        return versions;
     }
 
     private ClinicalEncounter load(String id) {

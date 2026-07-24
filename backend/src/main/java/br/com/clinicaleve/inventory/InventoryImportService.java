@@ -248,7 +248,7 @@ public class InventoryImportService {
                         ? SuggestedAction.UNCHANGED
                         : SuggestedAction.UPDATE;
             } else if (!similar.isEmpty()
-                    && similar.getFirst().similarityPercent() >= SIMILARITY_REVIEW_THRESHOLD) {
+                    && similar.get(0).similarityPercent() >= SIMILARITY_REVIEW_THRESHOLD) {
                 action = SuggestedAction.REVIEW;
                 warnings.add("Existe uma descrição parecida. Revise antes de incluir ou atualizar");
                 matchReason = "Descrição semelhante";

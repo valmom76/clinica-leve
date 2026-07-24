@@ -12,7 +12,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         jdbc:
@@ -21,29 +21,55 @@ spring:
     enabled: true
   jackson:
     default-property-inclusion: non_null
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_STARTTLS_ENABLE:true}
+    test-connection: false
 
 server:
   port: 8080
   forward-headers-strategy: framework
   error:
     include-message: never
+  shutdown: graceful
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
         enabled: true
+      show-details: never
+  metrics:
+    tags:
+      application: clinica-leve-api
 
 security:
   jwt:
     secret: ${JWT_SECRET:desenvolvimento-chave-insegura-32-char}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
+  login:
+    max-failures: ${LOGIN_MAX_FAILURES:5}
+    window-minutes: ${LOGIN_WINDOW_MINUTES:15}
+    lock-minutes: ${LOGIN_LOCK_MINUTES:15}
 
 app:
+  public-url: ${FRONTEND_PUBLIC_URL:http://localhost:5173}
   uploads:
     directory: ${APP_UPLOAD_DIRECTORY:./uploads}
   cors:
@@ -55,6 +81,19 @@ app:
     admin-name: ${SEED_ADMIN_NAME:Administrador}
     admin-email: ${SEED_ADMIN_EMAIL:admin@clinicaleve.local}
     admin-password: ${SEED_ADMIN_PASSWORD:Admin@123}
+  bootstrap:
+    enabled: ${BOOTSTRAP_ENABLED:false}
+    clinic-name: ${BOOTSTRAP_CLINIC_NAME:}
+    clinic-slug: ${BOOTSTRAP_CLINIC_SLUG:}
+    admin-name: ${BOOTSTRAP_ADMIN_NAME:}
+    admin-email: ${BOOTSTRAP_ADMIN_EMAIL:}
+    admin-password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+  account-mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:}
+    reply-to: ${MAIL_REPLY_TO:}
+    reset-expiration-minutes: ${PASSWORD_RESET_EXPIRATION_MINUTES:30}
+    invitation-expiration-hours: ${INVITATION_EXPIRATION_HOURS:48}
   asaas:
     enabled: ${ASAAS_ENABLED:false}
     environment: ${ASAAS_ENVIRONMENT:sandbox}
@@ -62,8 +101,17 @@ app:
     webhook-token: ${ASAAS_WEBHOOK_TOKEN:}
     frontend-url: ${FRONTEND_PUBLIC_URL:http://localhost:5173}
   signature:
-    enabled: ${SIGNATURE_ENABLED:true}
+    enabled: ${SIGNATURE_ENABLED:false}
     master-key: ${SIGNATURE_MASTER_KEY:}
     storage-directory: ${SIGNATURE_STORAGE_DIRECTORY:${APP_UPLOAD_DIRECTORY:./uploads}/signed-documents}
     verification-base-url: ${SIGNATURE_VERIFICATION_BASE_URL:${FRONTEND_PUBLIC_URL:http://localhost:5173}/verify}
     csc-providers-json: ${SIGNATURE_CSC_PROVIDERS_JSON:[]}
+  messaging:
+    enabled: ${MESSAGING_ENABLED:false}
+    provider: ${MESSAGING_PROVIDER:META_WHATSAPP}
+    graph-version: ${META_GRAPH_VERSION:v23.0}
+    phone-number-id: ${META_PHONE_NUMBER_ID:}
+    access-token: ${META_ACCESS_TOKEN:}
+    app-secret: ${META_APP_SECRET:}
+    webhook-verify-token: ${META_WEBHOOK_VERIFY_TOKEN:}
+    queue-delay-ms: ${MESSAGING_QUEUE_DELAY_MS:60000}
